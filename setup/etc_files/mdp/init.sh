@@ -15,6 +15,7 @@ create_git_repo() {
     sudo mkdir -p "$PROJECT_ROOT_GIT"
     sudo mkdir -p "$PROJECT_ROOT_DIR"
     sudo chown -Rf pi:pi "$PROJECT_ROOT_GIT"
+    sudo chown -Rf pi:pi "$PROJECT_ROOT_GIT/objects"
     sudo chown -Rf pi:pi "$PROJECT_ROOT_DIR"
     echo "Created Git repo path! $PROJECT_ROOT_GIT"
     echo "Created Git dir path! $PROJECT_ROOT_DIR"
