@@ -7,4 +7,4 @@ cd "$PROJECT_ROOT_DIR"
 
 git --work-tree="$PROJECT_ROOT_DIR" --git-dir="$PROJECT_ROOT_GIT" checkout -f main
 
-bash "./server/entry.sh"
+./server/entry.sh &
