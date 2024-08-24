@@ -1,5 +1,4 @@
 
-
 ### Ignore IDE files
 .idea/
 .vs-code
@@ -15,3 +14,7 @@ __pycache__/
 ### Ignore virtual environments
 .venv/
 venv/
+
+### Ignore server logs
+/server/app/logs/*
+!/server/app/logs/*.md
