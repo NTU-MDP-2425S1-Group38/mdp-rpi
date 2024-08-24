@@ -23,8 +23,17 @@ if [ -f "/etc/start_hotspot.sh" ]; then
   echo "[SETUP] Running start_hotspot.sh" | sudo wall
   sudo chmod +x /etc/start_hotspot.sh
   bash /etc/start_hotspot.sh
-#  rm /etc/start_hotspot.sh
   echo "[SETUP] Completed start_hotspot.sh" | sudo wall
 fi
+
+# Init git repo and project dir
+if [ -f "/etc/mdp/init.sh" ]; then
+  printf "Running mdp/init.sh"
+  echo "[SETUP] Running mdp/init.sh" | sudo wall
+  sudo chmod +x /etc/mdp/init.sh
+  bash /etc/mdp/init.sh
+  echo "[SETUP] Completed mdp/init.sh" | sudo wall
+fi
+
 
 exit 0
