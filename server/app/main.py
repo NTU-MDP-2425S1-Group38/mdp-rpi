@@ -3,7 +3,7 @@ Entry file to start the server on the Raspberry Pi.
 """
 import logging
 
-from modules.logger.logger import init_logger
+from utils.logger import init_logger
 
 init_logger()
 

@@ -2,8 +2,6 @@ import logging
 import os
 from time import localtime, strftime
 
-from utils.metaclass.singleton import Singleton
-
 
 def init_logger() -> None:
     logging.basicConfig(
