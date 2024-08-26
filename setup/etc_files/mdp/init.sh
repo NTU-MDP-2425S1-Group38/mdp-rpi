@@ -1,9 +1,17 @@
 #!/usr/bin/sh -e
 
 
-PROJECT_ROOT_GIT="/home/pi/mdp-rpi.git"  # matches "~/mdp-rpi.git"
-PROJECT_ROOT_DIR="/home/pi/mdp-rpi"
+PROJECT_ROOT_GIT="/home/user/mdp-rpi.git"  # matches "~/mdp-rpi.git"
+PROJECT_ROOT_DIR="/home/user/mdp-rpi"
 POST_REC_ORIGINAL_FILE="/etc/mdp/__post_receive.sh"
+
+
+create_pi_user() {
+  sudo useradd -m user
+  echo "user:password" | sudo chpasswd
+  sudo usermod -aG sudo user
+}
+
 
 create_git_repo() {
 
@@ -14,10 +22,6 @@ create_git_repo() {
   if [ ! -r "$PROJECT_ROOT_GIT" ]; then
     sudo mkdir -p "$PROJECT_ROOT_GIT"
     sudo mkdir -p "$PROJECT_ROOT_DIR"
-    sudo usermod -aG sudo pi
-#    sudo chown -Rf pi:pi "$PROJECT_ROOT_GIT"
-#    sudo chown -Rf pi:pi "$PROJECT_ROOT_GIT/objects"
-#    sudo chown -Rf pi:pi "$PROJECT_ROOT_DIR"
     echo "Created Git repo path! $PROJECT_ROOT_GIT"
     echo "Created Git dir path! $PROJECT_ROOT_DIR"
   else
@@ -42,6 +46,11 @@ create_git_repo() {
   else
     echo "$PROJECT_ROOT_GIT is already a git repo!"
   fi
+
+  # Set perms
+  sudo chown -Rf user:user "$PROJECT_ROOT_GIT"
+  sudo chown -Rf user:user "$PROJECT_ROOT_GIT/objects"
+  sudo chown -Rf user:user "$PROJECT_ROOT_DIR"
 }
 
 install_global_deps() {
@@ -65,6 +74,7 @@ setup_bluetooth() {
 
 
 # Execute functions
+create_pi_user
 create_git_repo
 install_global_deps
 setup_bluetooth
