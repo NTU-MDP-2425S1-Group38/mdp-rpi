@@ -14,9 +14,10 @@ create_git_repo() {
   if [ ! -r "$PROJECT_ROOT_GIT" ]; then
     sudo mkdir -p "$PROJECT_ROOT_GIT"
     sudo mkdir -p "$PROJECT_ROOT_DIR"
-    sudo chown -Rf pi:pi "$PROJECT_ROOT_GIT"
-    sudo chown -Rf pi:pi "$PROJECT_ROOT_GIT/objects"
-    sudo chown -Rf pi:pi "$PROJECT_ROOT_DIR"
+    sudo usermod -aG sudo pi
+#    sudo chown -Rf pi:pi "$PROJECT_ROOT_GIT"
+#    sudo chown -Rf pi:pi "$PROJECT_ROOT_GIT/objects"
+#    sudo chown -Rf pi:pi "$PROJECT_ROOT_DIR"
     echo "Created Git repo path! $PROJECT_ROOT_GIT"
     echo "Created Git dir path! $PROJECT_ROOT_DIR"
   else
