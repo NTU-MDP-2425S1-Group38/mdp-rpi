@@ -1,12 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
-# shellcheck disable=SC2164
-cd /home/user/mdp-rpi/server/app
+python3.11 -m venv /home/user/mdp-rpi/server/app/venv
 
-python3 -m venv venv
+. /home/user/mdp-rpi/server/app/venv/bin/activate
 
-# shellcheck disable=SC3046
-source /home/user/mdp-rpi/server/app/venv/bin/activate
-
-pip install -r requirements.txt
-
+pip install -r /home/user/mdp-rpi/server/app/requirements.txt

@@ -19,7 +19,7 @@ git --work-tree="$PROJECT_ROOT_DIR" --git-dir="$PROJECT_ROOT_GIT" checkout -f ma
 #    fi
 #done
 
-
+#
 chmod +x /home/user/mdp-rpi/server/server_install_deps.sh
 /home/user/mdp-rpi/server/server_install_deps.sh
 
