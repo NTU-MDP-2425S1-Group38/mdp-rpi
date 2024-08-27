@@ -1,5 +1,5 @@
-from types.board import Board
-from types.instruction import Instruction
+from app_types.board import Board
+from app_types.instruction import Instruction
 from utils.metaclass.singleton import Singleton
 
 
