@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from types.primatives.position import Position
+from app_types.primatives.position import Position
 
 
 class Car(BaseModel):

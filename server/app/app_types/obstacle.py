@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
-from types.primatives.obstacle_direction import ObstacleDirection
-from types.primatives.obstacle_label import ObstacleLabel
-from types.primatives.position import Position
+from app_types.primatives.obstacle_direction import ObstacleDirection
+from app_types.primatives.obstacle_label import ObstacleLabel
+from app_types.primatives.position import Position
 
 
 class Obstacle(BaseModel):

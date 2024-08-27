@@ -1,7 +1,7 @@
 from typing import List
 from pydantic import BaseModel, Field
-from types.car import Car
-from types.obstacle import Obstacle
+from app_types.car import Car
+from app_types.obstacle import Obstacle
 
 
 class Board(BaseModel):
