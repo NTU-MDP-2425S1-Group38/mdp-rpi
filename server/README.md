@@ -41,3 +41,7 @@ Backward-Left | t,10,-25,90
 
 For Bluetooth:
 https://bluedot.readthedocs.io/en/latest/pairpiandroid.html
+
+sudo apt install libbluetooth-dev
+sudo apt-get install python3-dev
+pip install git+https://github.com/pybluez/pybluez.git#egg=pybluez

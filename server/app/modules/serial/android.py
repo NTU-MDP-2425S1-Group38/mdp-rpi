@@ -91,9 +91,9 @@ class Android(Link):
             os.system("sudo hciconfig hci0 piscan")
 
             # Initialize server socket
-            self.server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-            self.server_sock.bind(("", bluetooth.PORT_ANY))
-            self.server_sock.listen(1)
+            self.server_socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+            self.server_socket.bind(("", bluetooth.PORT_ANY))
+            self.server_socket.listen(1)
 
             # Parameters
             port = self.server_socket.getsockname()[1]
