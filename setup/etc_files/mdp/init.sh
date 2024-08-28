@@ -64,16 +64,13 @@ install_global_deps() {
 
 }
 
+# Haven't tested this yet
 setup_bluetooth() {
   echo "Setting up bluetooth configurations"
   sudo sed -i 's/ExecStart=\/usr\/libexec\/bluetooth\/bluetoothd/ExecStart=\/usr\/libexec\/bluetooth\/bluetoothd -C --noplugin=sap \nExecStartPost=\/usr\/bin\/sdptool add SP/' /lib/systemd/system/bluetooth.service
   sudo systemctl daemon-reload
   sudo systemctl restart bluetooth
 }
-
-
-
-
 
 # Execute functions
 create_pi_user
