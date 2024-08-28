@@ -38,3 +38,6 @@ Forward-Left | T,10,-25,90
 Backward | t,10,0,30
 Backward-Right | t,10,25,90
 Backward-Left | t,10,-25,90
+
+For Bluetooth:
+https://bluedot.readthedocs.io/en/latest/pairpiandroid.html

@@ -26,8 +26,11 @@ pandas==2.2.2
 pillow==10.4.0
 psutil==6.0.0
 py-cpuinfo==9.0.0
+PyBluez @ git+https://github.com/pybluez/pybluez.git#egg=pybluez
 pydantic==2.8.2
 pydantic_core==2.20.1
+pyobjc-core==10.3.1
+pyobjc-framework-Cocoa==10.3.1
 pyparsing==3.1.2
 pyserial==3.5
 python-dateutil==2.9.0.post0

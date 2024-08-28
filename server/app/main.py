@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 from modules.web_server.web_server import WebServer
 from modules.serial.stm32 import STM
+from modules.serial.android import Android
 from utils.logger import init_logger
 import uvicorn
 
@@ -30,12 +31,12 @@ def main():
     load_dotenv()
     init_logger()
 
+    server_process = Process(target=run_web_server)
+
     # drive_speed = 40
     # drive_angle = 25
 
     # stm = STM()
-
-    server_process = Process(target=run_web_server)
 
     # stm.connect()
 
@@ -61,7 +62,10 @@ def main():
 
     # Backward Right
     # stm.send_cmd("t", drive_speed, drive_angle, 90)
-    # print("Backward Right")s
+    # print("Backward Right")
+
+    android = Android()
+    android.connect()
 
     server_process.start()
     server_process.join()
