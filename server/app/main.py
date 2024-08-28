@@ -59,8 +59,9 @@ def main():
     # stm.send_cmd("t", drive_speed, -drive_angle,90)
     # print("Backward Left")
 
-    #
+    # Backward Right
     # stm.send_cmd("t", drive_speed, drive_angle, 90)
+    # print("Backward Right")s
 
     server_process.start()
     server_process.join()

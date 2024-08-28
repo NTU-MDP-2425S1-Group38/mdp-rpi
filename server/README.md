@@ -14,12 +14,27 @@ On laptop:
 
 ```bash
 git remote add rpi user@192.168.100.100:/home/user/mdp-rpi.git
+git push rpi main
+
 ```
 
 On RPI:
 
 ```bash
-git pull origin main
 chmod +x server_entry.sh
-chmdo +x server_install_deps.sh
+chmod +x server_install_deps.sh
 ```
+
+Command Format to Send to STM to move:
+
+Direction, Speed, Angle, Distance
+
+Examples:
+direction | command
+--- | ---
+Forward | T,10,0,30
+Forward-Right | T,10,25,90
+Forward-Left | T,10,-25,90
+Backward | t,10,0,30
+Backward-Right | t,10,25,90
+Backward-Left | t,10,-25,90

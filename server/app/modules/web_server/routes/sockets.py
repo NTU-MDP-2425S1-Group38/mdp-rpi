@@ -50,9 +50,9 @@ async def stm_command(websocket: WebSocket):
         # Parse the received data (assuming format: "flag,speed,angle,val")
         try:
             flag, speed, angle, val = data.split(",")
-            speed = float(speed)
-            angle = float(angle)
-            val = float(val)
+            speed = int(speed)
+            angle = int(angle)
+            val = int(val)
 
             # Call the send_cmd function
             stm.send_cmd(flag, speed, angle, val)
