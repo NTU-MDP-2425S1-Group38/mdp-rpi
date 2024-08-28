@@ -1,5 +1,4 @@
-from configuration import BAUD_RATE, SERIAL_PORT
-import sys
+from .configuration import BAUD_RATE, SERIAL_PORT
 from pathlib import Path
 from typing import Optional
 

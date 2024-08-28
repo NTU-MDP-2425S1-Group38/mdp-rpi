@@ -30,15 +30,37 @@ def main():
     load_dotenv()
     init_logger()
 
-    stm = STM()
+    # drive_speed = 40
+    # drive_angle = 25
+
+    # stm = STM()
 
     server_process = Process(target=run_web_server)
 
-    stm.connect()
+    # stm.connect()
 
-    stm.send_cmd("T", 40, 0, 10)
-    print("Sent command to STM")
-    stm.send_cmd("t", 40, 0, 10)
+    # Forward
+    # stm.send_cmd("T", drive_speed, 0, 30)
+    # print("Forward")
+
+    # Backward
+    # stm.send_cmd("t", drive_speed, 0, 30)
+    # print("Backward")
+
+    # Forward Left
+    # stm.send_cmd("T", drive_speed, -drive_angle, 90)
+    # print("Forward Left")
+
+    # Forward Right
+    # stm.send_cmd("T", drive_speed, drive_angle, 90)
+    # print("Forward Right")
+
+    # Backward Left
+    # stm.send_cmd("t", drive_speed, -drive_angle,90)
+    # print("Backward Left")
+
+    #
+    # stm.send_cmd("t", drive_speed, drive_angle, 90)
 
     server_process.start()
     server_process.join()
