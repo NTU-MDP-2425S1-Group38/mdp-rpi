@@ -7,9 +7,13 @@ POST_REC_ORIGINAL_FILE="/etc/mdp/__post_receive.sh"
 
 
 create_pi_user() {
-  sudo useradd -m user
-  echo "user:password" | sudo chpasswd
-  sudo usermod -aG sudo user
+  # Check if the user 'user' exists
+  if ! id -u user >/dev/null 2>&1; then
+    # Add the user 'user' if it does not exist
+    sudo useradd -m user
+    echo "user:password" | sudo chpasswd
+    sudo usermod -aG sudo user
+  fi
 }
 
 
@@ -58,23 +62,17 @@ install_global_deps() {
   sudo apt install vim -y
   echo "Installing tmux"
   sudo apt install tmux -y
+  echo "Installing libbluetooth-dev"
+  sudo apt install libbluetooth-dev -y
   echo "Installing Python 3.11"
   sudo apt install python3.11 -y
   sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
-
+  echo "Installing Python dev"
+  sudo apt-get install python3-dev -y
 }
 
-# Haven't tested this yet
-setup_bluetooth() {
-  echo "Setting up bluetooth configurations"
-  # Need to make sure command does not keep on adding the line
-  sudo sed -i 's/ExecStart=\/usr\/libexec\/bluetooth\/bluetoothd/ExecStart=\/usr\/libexec\/bluetooth\/bluetoothd -C --noplugin=sap \nExecStartPost=\/usr\/bin\/sdptool add SP/' /lib/systemd/system/bluetooth.service
-  sudo systemctl daemon-reload
-  sudo systemctl restart bluetooth
-}
 
 # Execute functions
 create_pi_user
 create_git_repo
 install_global_deps
-setup_bluetooth

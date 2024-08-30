@@ -33,6 +33,14 @@ if [ -f "/etc/mdp/init.sh" ]; then
   sudo chmod +x /etc/mdp/init.sh
   bash /etc/mdp/init.sh
   echo "[SETUP] Completed mdp/init.sh" | sudo wall
+  sudo mv /etc/mdp/init.sh /etc/mdp/init.ran.sh
+fi
+
+# Run every boot shell script
+if [ -f "/etc/mdp/every_boot.sh" ]; then
+  printf "Running every_boot.sh"
+  sudo chmod +x /etc/mdp/every_boot.sh
+  bash /etc/mdp/every_bood.sh
 fi
 
 
