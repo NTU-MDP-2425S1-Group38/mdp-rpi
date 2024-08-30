@@ -42,6 +42,18 @@ Backward-Left | t,10,-25,90
 For Bluetooth:
 https://bluedot.readthedocs.io/en/latest/pairpiandroid.html
 
+commands:
+sudo chmod o+rw /var/run/sdp
 sudo apt install libbluetooth-dev
 sudo apt-get install python3-dev
 pip install git+https://github.com/pybluez/pybluez.git#egg=pybluez
+
+For Ruben:
+
+```bash
+ssh user@192.168.100.100 #Enter password
+sudo chmod 777 /dev/ttyUSB0
+cd mdp-rpi
+cd server
+./server_entry.sh
+```
