@@ -27,6 +27,9 @@ class AndroidMessage:
         self._cat = cat
         self._value = value
 
+    def __str__(self):
+        return self._value
+
     @property
     def cat(self):
         """
