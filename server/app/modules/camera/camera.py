@@ -3,7 +3,7 @@ import numpy as np
 from utils.metaclass.singleton import Singleton
 
 
-class Camera():
+class Camera:
     """
     This class handles all camera interaction.
     Basically just reads from the camera (hopefully)
