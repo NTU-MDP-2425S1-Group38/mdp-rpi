@@ -30,7 +30,7 @@ def run_web_server() -> None:
 
 def run_bluetooth_server() -> None:
     android = Android()
-    android.connect()
+    android.run()
 
 
 def main():
