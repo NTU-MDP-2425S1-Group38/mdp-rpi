@@ -14,7 +14,7 @@ class Camera:
         self.cam = picamera2.Picamera2()
 
         # Configure the camera for capturing still images
-        config = self.cam.create_still_configuration()
+        config = self.cam.create_still_configuration(main={"size": (640, 640)})
 
         # Configure and start the camera
         self.cam.configure(config)
@@ -31,7 +31,7 @@ class Camera:
         image_stream = io.BytesIO()
 
         # Capture the image in JPEG format with quality 40 (0.4)
-        self.cam.capture(image_stream, format='jpeg', quality=40)
+        self.cam.capture_file(image_stream, format='jpeg', quality=40)
 
         # Move the pointer to the beginning of the BytesIO buffer
         image_stream.seek(0)
