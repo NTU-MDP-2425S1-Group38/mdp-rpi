@@ -9,6 +9,7 @@ from typing import Optional
 
 import bluetooth
 
+from utils.metaclass.singleton import Singleton
 from .link import Link
 
 
@@ -66,7 +67,7 @@ class AndroidMessage:
 #             pass
 
 
-class Android(Link):
+class Android(Link, metaclass=Singleton):
     def __init__(self):
         """
         Initialize the Bluetooth connection.
