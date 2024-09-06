@@ -30,8 +30,8 @@ class Camera:
         # Create a BytesIO object to store the image in memory
         image_stream = io.BytesIO()
 
-        # Capture the image in JPEG format with quality 40 (0.4)
-        self.cam.capture_file(image_stream, format='jpeg', quality=40)
+        # Capture the image in JPEG format
+        self.cam.capture_file(image_stream, format='jpeg')
 
         # Move the pointer to the beginning of the BytesIO buffer
         image_stream.seek(0)
