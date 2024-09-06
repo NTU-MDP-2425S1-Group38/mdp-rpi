@@ -69,6 +69,9 @@ install_global_deps() {
   sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
   echo "Installing Python dev"
   sudo apt-get install python3-dev -y
+  echo "Installing libcap"
+  sudo apt install libcap-dev -y
+  sudo apt install libcamera-apps -y
 }
 
 
