@@ -73,8 +73,8 @@ class Android(Link, metaclass=Singleton):
         Initialize the Bluetooth connection.
         """
         # Initialize super class's init.
-        super().__init__()
-        self.hostId = "192.168.14.14"
+        super(Link).__init__()
+        # self.hostId = "192.168.100.100"
         # UUID to be generated, but can just use the default one - Bryan
         self.uuid = (
             "00001101-0000-1000-8000-00805f9b34fb"  # Default but should try generated
