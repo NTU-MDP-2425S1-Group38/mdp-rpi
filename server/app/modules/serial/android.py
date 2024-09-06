@@ -67,13 +67,13 @@ class AndroidMessage:
 #             pass
 
 
-class Android(Link, metaclass=Singleton):
+class Android(metaclass=Singleton):
     def __init__(self):
         """
         Initialize the Bluetooth connection.
         """
         # Initialize super class's init.
-        super(Link).__init__()
+        # super(Link).__init__()
         # self.hostId = "192.168.100.100"
         # UUID to be generated, but can just use the default one - Bryan
         self.uuid = (
