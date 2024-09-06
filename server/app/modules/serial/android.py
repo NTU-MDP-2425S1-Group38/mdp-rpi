@@ -67,7 +67,7 @@ class AndroidMessage:
 #             pass
 
 
-class Android(Link, metaclass=Singleton):
+class Android(metaclass=Singleton):
     def __init__(self):
         """
         Initialize the Bluetooth connection.
