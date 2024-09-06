@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import socket
 import sys
@@ -80,6 +81,7 @@ class Android(Link):
         self.connected = False
         self.client_socket = None
         self.server_socket = None
+        self.logger = logging.getLogger()
 
     def connect(self):
         """
@@ -108,22 +110,23 @@ class Android(Link):
                 profiles=[bluetooth.SERIAL_PORT_PROFILE],
             )
 
-            print("Awaiting bluetooth connection on port: %d", port)
+            self.logger.info(f"Awaiting bluetooth connection on port: {port}")
             self.client_socket, client_address = self.server_socket.accept()
-            print("Accepted connection from client address of: %s", str(client_address))
+            self.logger.info(f"Accepted connection from client address of: {str(client_address)}")
             self.connected = True
 
         except Exception as e:
             # Prints out the error if socket connection failed.
-            print("Android socket connection failed: %s", str(e))
+            self.logger.info("Android socket connection failed: %s", str(e))
             self.server_socket.close()
             self.client_socket.close()
 
     def disconnect(self):
         """Disconnect from Android Bluetooth connection and shutdown all the sockets established"""
         try:
-            print("Disconnecting bluetooth")
-            # socket.shutdown is not necessary to close the connection, but is beneficial when dealing with multithreading processes. - Bryan
+            self.logger.info("Disconnecting bluetooth")
+            # socket.shutdown is not necessary to close the connection, but is beneficial when dealing with
+            # multithreading processes. - Bryan
             self.server_socket.shutdown(socket.SHUT_RDWR)
             self.client_socket.shutdown(socket.SHUT_RDWR)
             self.client_socket.close()
@@ -132,9 +135,9 @@ class Android(Link):
             self.server_socket = None
             self.connected = False
             time.sleep(1)  # Time for cleanup
-            print("Bluetooth has been disconnected")
+            self.logger.info("Bluetooth has been disconnected")
         except Exception as e:
-            print("Failed to disconnect bluetooth: %s", str(e))
+            self.logger.error(f"Failed to disconnect bluetooth: {str(e)}")
 
     def send(self, message: AndroidMessage):
         """Send message to Android"""
@@ -142,10 +145,10 @@ class Android(Link):
             # Default code to send a message to Android. - Bryan
             # ~ self.client_socket.send(f"{message.jsonify}\n".encode("utf-8"))
             self.client_socket.send(f"{message}\n".encode("utf-8"))
-            print("Sent to Android: %s", str(message))
-            # ~ print("Sent to Android: %s", str(message.jsonify))
+            self.logger.info("Sent to Android: %s", str(message))
+            # ~ self.logger.info("Sent to Android: %s", str(message.jsonify))
         except OSError as e:
-            print("Message sending failed: %s", str(e))
+            self.logger.info("Message sending failed: %s", str(e))
             raise e
 
     def receive(self) -> Optional[str]:
@@ -155,11 +158,29 @@ class Android(Link):
             # Default code to receive data from Android in JSON format. - Bryan
             unclean_message = self.client_socket.recv(1024)
             message = unclean_message.strip().decode("utf-8")
-            # ~ print("Message received from Android: %s", str(message))
+            # ~ self.logger.info("Message received from Android: %s", str(message))
             # ~ response_data = "Message received successfully!"
             # ~ self.client_socket.send(response_data.encode('utf-8'))
-            # ~ print(message)
+            # ~ self.logger.info(message)
             return message
         except OSError as e:  # connection broken, try to reconnect
-            print("Message failed to be received: %s", str(e))
+            self.logger.error(f"Message failed to be received: {str(e)}")
             raise e
+
+
+    def run(self) -> None:
+        """
+        Main running function in a while loop
+        :return:
+        """
+
+        self.connect()
+
+        ### TESTING
+        # Currently reflect sent message back to the tablet
+
+        while True:
+            msg = self.receive()
+            self.send(AndroidMessage("test", msg))
+
+

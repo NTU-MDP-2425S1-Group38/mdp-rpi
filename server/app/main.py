@@ -28,11 +28,17 @@ def run_web_server() -> None:
     )
 
 
+def run_bluetooth_server() -> None:
+    android = Android()
+    android.connect()
+
+
 def main():
     load_dotenv()
     init_logger()
 
     server_process = Process(target=run_web_server)
+    bluetooth_process = Process(target=run_bluetooth_server)
 
     # drive_speed = 40
     # drive_angle = 25
@@ -65,10 +71,10 @@ def main():
     # stm.send_cmd("t", drive_speed, drive_angle, 90)
     # print("Backward Right")
 
-    android = Android()
-    android.connect()
-
+    bluetooth_process.start()
     server_process.start()
+
+    bluetooth_process.join()
     server_process.join()
 
 
