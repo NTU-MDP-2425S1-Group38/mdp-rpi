@@ -1,11 +1,11 @@
 from enum import Enum
 
 
-class ObstacleDirection(str, Enum):
+class ObstacleDirection(int, Enum):
     """
     Directions on where the image card is placed on the obstacle.
     """
-    North = "NORTH"
-    South = "SOUTH"
-    East = "EAST"
-    West = "WEST"
+    North = 1
+    South = 2
+    East = 3
+    West = 4

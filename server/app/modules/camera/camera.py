@@ -1,5 +1,7 @@
 import base64
 import io
+import logging
+
 import picamera2
 
 
@@ -9,8 +11,11 @@ class Camera:
     Basically just reads from the camera (hopefully)
     """
 
+    logger = logging.getLogger("Camera")
+
     def __init__(self):
         # Initialize Picamera2
+        self.logger.info("Starting Picamera!")
         self.cam = picamera2.Picamera2()
 
         # Configure the camera for capturing still images
@@ -19,6 +24,7 @@ class Camera:
         # Configure and start the camera
         self.cam.configure(config)
         self.cam.start()
+        self.logger.info("Camera has started!")
 
 
     def capture(self) -> str:
@@ -26,6 +32,8 @@ class Camera:
         Method to read the image of the camera as a np array
         :return: Base64 image
         """
+
+        self.logger.info("Capturing image!")
 
         # Create a BytesIO object to store the image in memory
         image_stream = io.BytesIO()

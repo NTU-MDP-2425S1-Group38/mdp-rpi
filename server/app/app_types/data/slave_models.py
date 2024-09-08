@@ -1,0 +1,48 @@
+from enum import Enum
+from typing import List, Union
+
+from pydantic import BaseModel, Field, field_validator, ValidationError
+
+
+class SlaveWorkRequestType(str, Enum):
+    Algorithm = "ALGORITHM"
+    ImageRecognition = "IMAGE_RECOGNITION"
+
+
+class SlaveObstacleDirection(str, Enum):
+    North = 1,
+    South = 2,
+    East = 3,
+    West = 4
+
+
+class SlaveObstacle(BaseModel):
+    id: int = Field(default=0)
+    x: int
+    y: int
+    d: SlaveObstacleDirection
+
+
+class SlaveWorkRequestPayloadAlgo(BaseModel):
+    obstacles: List[SlaveObstacle]
+
+
+class SlaveWorkRequestPayloadImageRecognition(BaseModel):
+    image: str  # Base64 encoded image (UTF-8)
+
+
+class SlaveWorkRequest(BaseModel):
+    id:str = Field(default="")
+    type: SlaveWorkRequestType
+    payload: Union[SlaveWorkRequestPayloadAlgo, SlaveWorkRequestPayloadImageRecognition]
+
+    @classmethod
+    @field_validator("payload", mode="before")
+    def __validate_payload(cls, value, values):
+        if values["type"] == SlaveWorkRequestType.Algorithm:
+            return SlaveWorkRequestPayloadAlgo(**value)
+        if values["type"] == SlaveWorkRequestType.ImageRecognition:
+            return SlaveWorkRequestPayloadImageRecognition(**value)
+
+        raise ValidationError("'Type' not defined in request!")
+

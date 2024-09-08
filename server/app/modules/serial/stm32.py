@@ -1,3 +1,4 @@
+from utils.metaclass.singleton import Singleton
 from .configuration import BAUD_RATE, SERIAL_PORT
 from pathlib import Path
 from typing import Optional
@@ -5,12 +6,11 @@ from typing import Optional
 import serial
 
 
-class STM:
+class STM(metaclass=Singleton):
     def __init__(self):
         """
         Constructor for STMLink.
         """
-        super().__init__()
         self.serial_link = None
         self.received = []
 
