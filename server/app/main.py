@@ -56,7 +56,7 @@ def main():
 
     bluetooth_process.join()
     server_process.join()
-    stm_process.join()\
+    stm_process.join()
 
     # drive_speed = 40
     # drive_angle = 25
