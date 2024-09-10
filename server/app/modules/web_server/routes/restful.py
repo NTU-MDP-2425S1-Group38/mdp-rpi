@@ -1,3 +1,4 @@
+import logging
 from time import strftime, localtime
 
 from fastapi import APIRouter
@@ -19,4 +20,6 @@ async def capture():
     Endpoint to trigger the GameState class to take a picture and send to slaves
     :return:
     """
+    logger = logging.getLogger("/command/capture")
+    logger.info("Received capture command")
     GameState().capture_and_process_image()
