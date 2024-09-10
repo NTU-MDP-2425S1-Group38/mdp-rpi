@@ -1,8 +1,9 @@
 import logging
-from typing import Literal, List
+from typing import Literal, List, Optional
 
 from app_types.obstacle import Obstacle
 from app_types.primatives.command import CommandInstruction, MoveInstruction
+from app_types.primatives.obstacle_label import ObstacleLabel
 from utils.instructions import Instructions
 from modules.camera.camera import Camera
 from modules.serial.stm32 import STM
@@ -35,7 +36,31 @@ class GameState(metaclass=Singleton):
         self.logger.info("Initialising STM connector")
         self.stm = STM()
 
+
+    """
+    Helper methods
+    """
+
+    def capture_and_process_image(self) -> Optional[ObstacleLabel]:
+        self.logger.info("Capturing image!")
+        image_b64 = self.camera.capture()
+        self.logger.info("Captured image as b64!")
+        label = self.connection_manager.slave_request_cv(image_b64)
+        self.logger.info(f"Image labeled as: {label}")
+        return label
+
+
+    """
+    Public method to update gamestate
+    """
+
     def set_obstacles(self, *obstacles: Obstacle) -> None:
+        """
+        Method to set the obstacles in gamestate.
+        This needs to be done prior to "running" task 1.
+        :param obstacles: List[Obstacle]
+        :return:
+        """
         self.obstacles = list(obstacles)
         self.logger.info("Requesting for commands from algo server!")
 
@@ -43,7 +68,16 @@ class GameState(metaclass=Singleton):
         self.logger.info(f"Received {len(commands)} from the server!")
         self.instruction.add(commands)
 
+    """
+    Methods related to task 1.
+    """
+
     def _run_task_one(self) -> None:
+        """
+        Method to run task one.
+        Obstacles need to be set and instructions need to be added prior to running.
+        :return: None
+        """
         self.logger.info("Starting task one running loop!")
         while cmd := self.instruction.pop():
 
@@ -57,6 +91,10 @@ class GameState(metaclass=Singleton):
 
         self.logger.info("Run Task One completed!")
 
+
+    """
+    Main entry methods
+    """
 
     def run(self, task: Literal[1, 2]) -> None:
         """
