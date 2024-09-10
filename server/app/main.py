@@ -3,6 +3,8 @@ Entry file to start the server on the Raspberry Pi.
 """
 import logging
 import os
+import signal
+import sys
 from multiprocessing import Process
 from dotenv import load_dotenv
 
@@ -42,13 +44,34 @@ def run_stm():
     # stm.connect()
 
 
+
 def main():
     load_dotenv()
     init_logger()
 
+    processes = []
+
+    def signal_handler(signum, frame):
+        logging.getLogger().info("Received termination signal. Shutting down gracefully...")
+        for process in processes:
+            process.terminate()
+        for process in processes:
+            process.join()
+        sys.exit(0)
+
+    # Register the signal handler for SIGINT and SIGTERM
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     server_process = Process(target=run_web_server)
     bluetooth_process = Process(target=run_bluetooth_server)
     stm_process = Process(target=run_stm)
+
+    processes.extend([
+        server_process,
+        bluetooth_process,
+        stm_process
+    ])
 
     bluetooth_process.start()
     server_process.start()
