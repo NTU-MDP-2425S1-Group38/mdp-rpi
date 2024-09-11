@@ -95,6 +95,7 @@ class ConnectionManager(metaclass=Singleton):
     """
 
     def slave_request_cv(self, image: str) -> Optional[ObstacleLabel]:
-        pass
+        self.logger.info("Sending CV request to slaves!")
+        return None
 
 
