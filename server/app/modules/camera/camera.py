@@ -21,14 +21,6 @@ class Camera(metaclass=Singleton):
         self.logger.info("Starting Picamera!")
         self.cam = picamera2.Picamera2()
 
-        # Configure the camera for capturing still images
-        config = self.cam.create_still_configuration()
-
-        # Configure and start the camera
-        self.cam.configure(config)
-        self.cam.start()
-        self.logger.info("Camera has started!")
-
         self.lock = threading.Lock()
 
 
@@ -39,6 +31,14 @@ class Camera(metaclass=Singleton):
         """
 
         with self.lock:
+            # Configure the camera for capturing still images
+            config = self.cam.create_still_configuration()
+
+            # Configure and start the camera
+            self.cam.configure(config)
+            self.cam.start()
+            self.logger.info("Camera has started!")
+
             self.logger.info("Capturing image!")
 
             # Create a BytesIO object to store the image in memory
@@ -50,6 +50,8 @@ class Camera(metaclass=Singleton):
             self.logger.info(self.cam.capture_array("raw"))
             #
             self.logger.info("Image has been captured as np.Array!")
+
+            self.cam.stop()
 
             return ""
 
