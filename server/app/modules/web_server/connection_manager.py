@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from asyncio import Future
 from collections import defaultdict
 from typing import List, Optional, Dict, Set
 from uuid import uuid4
@@ -45,11 +46,30 @@ class ConnectionManager(metaclass=Singleton):
     def _run_async(self, coro):
         self.logger.info("Attempting to run async coroutine")
         try:
-            self.logger.info("Attempting to run within loop")
+            # Try to get the running event loop
             loop = asyncio.get_running_loop()
-            return loop.run_until_complete(coro)
+            self.logger.info("Event loop is running, scheduling the task")
+
+            # Create a Future object
+            future = Future()
+
+            # Define a callback to set the result when the task completes
+            def on_complete(task_coro):
+                try:
+                    # Set the result of the Future to the result of the coroutine
+                    future.set_result(task_coro.result())
+                except Exception as e:
+                    future.set_exception(e)
+
+            # Schedule the coroutine and attach the callback
+            task = asyncio.ensure_future(coro)
+            task.add_done_callback(on_complete)
+
+            # Block the synchronous function until the Future is complete
+            return future.result()
+
         except RuntimeError:  # No event loop is running
-            self.logger.warning("Unable to get loop, running as stand alone")
+            self.logger.warning("No running loop, using asyncio.run()")
             return asyncio.run(coro)
 
 
