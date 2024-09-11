@@ -3,6 +3,7 @@ from time import strftime, localtime
 
 from fastapi import APIRouter
 
+from modules.camera.camera import Camera
 from modules.gamestate.gamestate import GameState
 
 rest_endpoints = APIRouter()
@@ -23,5 +24,8 @@ async def capture():
     :return:
     """
     logger.info("Received capture command")
-    state = GameState().capture_and_process_image()
-    return state
+    # state = GameState().capture_and_process_image()
+    # return state
+    cam = Camera()
+    cam.capture()
+    return ""
