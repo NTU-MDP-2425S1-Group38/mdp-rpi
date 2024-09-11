@@ -90,7 +90,7 @@ class ConnectionManager(metaclass=Singleton):
 
     def slave_request_algo(self, obstacles: List[Obstacle]) -> List[Command]:
         self.logger.info("Sending Algo request to slaves!")
-        return asyncio.run(self._broadcast_algo_req(uuid4(), obstacles))
+        return asyncio.run(self._broadcast_algo_req(str(uuid4()), obstacles))
 
     """
     CV RELATED STUFF
@@ -151,6 +151,6 @@ class ConnectionManager(metaclass=Singleton):
             return task.result()
         else:
             # If no loop is running, just run until completion
-            return loop.run_until_complete(self._broadcast_cv_req(uuid4(), image))
+            return loop.run_until_complete(self._broadcast_cv_req(str(uuid4()), image))
 
 
