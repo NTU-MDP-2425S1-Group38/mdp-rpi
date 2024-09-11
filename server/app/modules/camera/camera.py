@@ -32,7 +32,7 @@ class Camera(metaclass=Singleton):
 
         with self.lock:
             # Configure the camera for capturing still images
-            config = self.cam.create_still_configuration()
+            config = self.cam.create_still_configuration(queue=False)
 
             # Configure and start the camera
             self.cam.configure(config)
