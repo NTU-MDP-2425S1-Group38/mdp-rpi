@@ -2,7 +2,7 @@ import asyncio
 import logging
 from asyncio import Future
 from collections import defaultdict
-from typing import List, Optional, Dict, Set
+from typing import List, Optional, Dict, Set, Coroutine
 from uuid import uuid4
 
 from fastapi import WebSocket
@@ -43,29 +43,24 @@ class ConnectionManager(metaclass=Singleton):
     PRIVATE METHODS
     """
 
-    def _run_async(self, coro):
+    def _run_async(self, coro:Coroutine):
         self.logger.info("Attempting to run async coroutine")
-        # try:
-        #     # Try to get the running event loop
-        #     loop = asyncio.get_running_loop()
-        #     self.logger.info("Event loop is running, creating task")
-        #
-        #     # Create a task and run it in the existing event loop
-        #     task = asyncio.ensure_future(coro)
-        #
-        #     # Use loop.run_until_complete if called from the main thread
-        #     return loop.run_until_complete(task)
-        # except RuntimeError:  # No event loop is running
-        #     self.logger.warning("No running loop, using asyncio.run()")
-        #     return asyncio.run(coro)
         try:
+            # Try to get the running event loop
             loop = asyncio.get_running_loop()
-        except RuntimeError:
-            # No running loop, so we can safely use asyncio.run
-            return asyncio.run(coro)
+            self.logger.info("Event loop is running, creating task")
 
-            # If we have a running loop, create a task to run the coroutine
-        return asyncio.create_task(coro)
+            # As we are in an already running event loop, create a task and await its completion
+            task = asyncio.create_task(coro)
+            res = asyncio.run_coroutine_threadsafe(task, loop).result()
+            loop.close()
+            return res
+        except RuntimeError:  # No event loop is running
+            self.logger.warning("No running loop, setting up a new loop")
+            # Set up a new event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return loop.run_until_complete(coro)
 
 
     """
@@ -175,6 +170,6 @@ class ConnectionManager(metaclass=Singleton):
 
     def slave_request_cv(self, image: str) -> Optional[ObstacleLabel]:
         self.logger.info("Sending CV request to slaves!")
-        return asyncio.run(self._broadcast_cv_req(str(uuid4()), image))
+        return self._run_async(self._broadcast_cv_req(str(uuid4()), image))
 
 
