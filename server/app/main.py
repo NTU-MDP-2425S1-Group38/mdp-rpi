@@ -79,7 +79,7 @@ def main():
     # for p in processes:
     #     p.join()
 
-    cam = Camera
+    cam = Camera()
     while True:
         cam.capture()
 
