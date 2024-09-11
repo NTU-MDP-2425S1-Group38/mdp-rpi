@@ -8,7 +8,7 @@ import picamera2
 from utils.metaclass.singleton import Singleton
 
 
-class Camera:
+class Camera(metaclass=Singleton):
     """
     This class handles all camera interaction.
     Basically just reads from the camera (hopefully)
