@@ -33,8 +33,8 @@ class GameState(metaclass=Singleton):
         self.logger.info("Initialising connection manager")
         self.connection_manager = ConnectionManager()
 
-        self.logger.info("Initialising STM connector")
-        self.stm = STM()
+        # self.logger.info("Initialising STM connector")
+        # self.stm = STM()
 
 
     """
