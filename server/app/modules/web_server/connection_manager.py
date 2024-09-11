@@ -129,7 +129,7 @@ class ConnectionManager(metaclass=Singleton):
 
         req = SlaveWorkRequest(
             id=req_id,
-            type=SlaveWorkRequestType.Algorithm,
+            type=SlaveWorkRequestType.ImageRecognition,
             payload=SlaveWorkRequestPayloadImageRecognition(image=image)
         ).model_dump_json()
 
