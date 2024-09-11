@@ -58,8 +58,8 @@ class ConnectionManager(metaclass=Singleton):
 
         # If the loop is running, we schedule the coroutine as a task and wait for its result safely.
         if loop.is_running():
-            # task = asyncio.create_task(coro)
-            return asyncio.run_coroutine_threadsafe(coro, loop).result()
+            task = asyncio.create_task(coro)
+            return asyncio.run_coroutine_threadsafe(task, loop).result()
         else:
             return loop.run_until_complete(coro)
 
