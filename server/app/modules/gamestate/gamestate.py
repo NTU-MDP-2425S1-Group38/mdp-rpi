@@ -43,12 +43,11 @@ class GameState(metaclass=Singleton):
 
     def capture_and_process_image(self) -> Optional[ObstacleLabel]:
         self.logger.info("Capturing image!")
-        # image_b64 = self.camera.capture()
-        # self.logger.info("Captured image as b64!")
-        # label = self.connection_manager.slave_request_cv(image_b64)
-        # self.logger.info(f"Image labeled as: {label}")
-        # return label
-        return None
+        image_b64 = self.camera.capture()
+        self.logger.info("Captured image as b64!")
+        label = self.connection_manager.slave_request_cv(image_b64)
+        self.logger.info(f"Image labeled as: {label}")
+        return label
 
 
     """
