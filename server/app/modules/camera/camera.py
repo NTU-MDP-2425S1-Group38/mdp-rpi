@@ -1,11 +1,14 @@
 import base64
 import io
 import logging
+import threading
 
 import picamera2
 
+from utils.metaclass.singleton import Singleton
 
-class Camera:
+
+class Camera(metaclass=Singleton):
     """
     This class handles all camera interaction.
     Basically just reads from the camera (hopefully)
@@ -33,6 +36,8 @@ class Camera:
         :return: Base64 image
         """
 
+        self.logger.info("Attempting to acquire lock for capturing image!")
+
         self.logger.info("Capturing image!")
 
         # Create a BytesIO object to store the image in memory
@@ -41,10 +46,15 @@ class Camera:
         # Capture the image in JPEG format
         self.cam.capture_file(image_stream, format='jpeg')
 
+        self.logger.info("Image has been captured as bytes!")
+
         # Move the pointer to the beginning of the BytesIO buffer
         image_stream.seek(0)
 
         # Convert the BytesIO buffer to base64
         image_base64 = base64.b64encode(image_stream.getvalue()).decode('utf-8')
 
+        self.logger.info("Image has been captured as base64!")
+
         return image_base64
+
