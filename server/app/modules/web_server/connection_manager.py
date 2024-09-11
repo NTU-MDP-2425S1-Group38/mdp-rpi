@@ -43,23 +43,24 @@ class ConnectionManager(metaclass=Singleton):
     PRIVATE METHODS
     """
 
-    def _run_async(self, coro:Coroutine):
+    def _run_async(self, coro: Coroutine):
         self.logger.info("Attempting to run async coroutine")
         try:
-            # Try to get the running event loop
             loop = asyncio.get_running_loop()
             self.logger.info("Event loop is running, creating task")
-
-            # As we are in an already running event loop, create a task and await its completion
-            task = asyncio.create_task(coro)
-            res = asyncio.run_coroutine_threadsafe(task, loop).result()
-            loop.close()
-            return res
-        except RuntimeError:  # No event loop is running
-            self.logger.warning("No running loop, setting up a new loop")
-            # Set up a new event loop
+        except RuntimeError:
+            self.logger.warning("No running loop, setting up a new temporary loop")
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(coro)
+            loop.close()
+            return result
+
+        # If the loop is running, we schedule the coroutine as a task and wait for its result safely.
+        if loop.is_running():
+            task = asyncio.create_task(coro)
+            return asyncio.run_coroutine_threadsafe(task, loop).result()
+        else:
             return loop.run_until_complete(coro)
 
 
