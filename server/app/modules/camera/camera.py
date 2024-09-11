@@ -57,6 +57,3 @@ class Camera(metaclass=Singleton):
         self.logger.info("Image has been captured as base64!")
 
         return image_base64
-
-        return ""
-
