@@ -8,11 +8,11 @@ class Singleton(type):
     Singleton metaclass that is thread-safe.
     """
     _instances = {}
-    _lock = threading.Lock()
+    # _lock = threading.Lock()
 
     def __call__(cls, *args, **kwargs):
         logging.getLogger().info(f"Attempting to acquire lock for {cls.__name__}")
-        with cls._lock:
+        with threading.Lock():
             logging.getLogger().info(f"Lock acquired for {cls.__name__}")
             if cls not in cls._instances:
                 logging.getLogger().info(f"Creating new instance of {cls.__name__}")
