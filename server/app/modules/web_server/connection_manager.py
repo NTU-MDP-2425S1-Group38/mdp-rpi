@@ -7,9 +7,10 @@ from uuid import uuid4
 from fastapi import WebSocket
 
 from app_types.data.slave_models import SlaveObstacle, SlaveWorkRequest, SlaveWorkRequestType, \
-    SlaveWorkRequestPayloadAlgo
+    SlaveWorkRequestPayloadAlgo, SlaveWorkRequestPayloadImageRecognition
 from app_types.obstacle import Obstacle
 from app_types.primatives.command import Command, AlgoCommandResponse
+from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
 from utils.metaclass.singleton import Singleton
 from pydantic import ValidationError
@@ -88,14 +89,59 @@ class ConnectionManager(metaclass=Singleton):
 
 
     def slave_request_algo(self, obstacles: List[Obstacle]) -> List[Command]:
+        self.logger.info("Sending Algo request to slaves!")
         return asyncio.get_event_loop().run_until_complete(self._broadcast_algo_req(uuid4(), obstacles))
 
     """
     CV RELATED STUFF
     """
 
+    async def _broadcast_cv_req(self, req_id:str, image: str) -> List[Command]:
+
+        if not self.connections:
+            self.logger.error("No slave connections available to process cv!")
+            return []
+
+        req = SlaveWorkRequest(
+            id=req_id,
+            type=SlaveWorkRequestType.Algorithm,
+            payload=SlaveWorkRequestPayloadImageRecognition(image=image)
+        ).model_dump_json()
+
+        async def send_and_receive(websocket: WebSocket) -> Optional[CvResponse]:
+            await websocket.send_text(req)
+            response = await websocket.receive_json()
+            try:
+                parsed = CvResponse(**response)
+                if parsed.id != req_id:
+                    self.logger.warning("Race condition! Received a mismatched ID from request!")
+                    return None
+
+                return parsed
+            except ValidationError:
+                self.logger.error("Unable to parse CvResponse!")
+                return None
+
+
+        tasks = [send_and_receive(conn) for conn in self.connections]
+
+        # Await for the first non-null response
+        while tasks:
+            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+
+            for task in done:
+                result = await task
+                if result:  # Check if the result is non-null
+                    # Cancel any remaining tasks since we have a valid result
+                    for pending_task in pending:
+                        pending_task.cancel()
+                    return result
+
+            # If no valid result, keep waiting for other tasks
+            tasks = list(pending)
+
     def slave_request_cv(self, image: str) -> Optional[ObstacleLabel]:
         self.logger.info("Sending CV request to slaves!")
-        return None
+        return asyncio.get_event_loop().run_until_complete(self._broadcast_cv_req(uuid4(), image))
 
 

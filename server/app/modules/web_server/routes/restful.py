@@ -7,7 +7,7 @@ from modules.camera.camera import Camera
 from modules.gamestate.gamestate import GameState
 
 rest_endpoints = APIRouter()
-logger = logging.getLogger("/command/capture")
+logger = logging.getLogger("Rest Endpoint")
 
 
 @rest_endpoints.get("/")
@@ -24,8 +24,8 @@ async def capture():
     :return:
     """
     logger.info("Received capture command")
-    # state = GameState().capture_and_process_image()
-    # return state
-    cam = Camera()
-    img = cam.capture()
-    return img
+    state = GameState().capture_and_process_image()
+    return state
+    # cam = Camera()
+    # img = cam.capture()
+    # return img
