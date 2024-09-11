@@ -53,6 +53,8 @@ class ConnectionManager(metaclass=Singleton):
             # Use run_coroutine_threadsafe to execute the coroutine in the existing loop
             future = asyncio.run_coroutine_threadsafe(coro, loop)
 
+            self.logger.info("Waiting for future!")
+
             # Block until the future is done and return the result
             return future.result()  # This will block until the task completes
         except RuntimeError:  # No event loop is running
