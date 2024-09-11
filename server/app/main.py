@@ -54,9 +54,8 @@ def main():
     def signal_handler(signum, frame):
         logging.getLogger().info("Received termination signal. Shutting down gracefully...")
         for process in processes:
-            process.terminate()
-        for process in processes:
-            process.join()
+            process.kill()
+
         sys.exit(0)
 
     # Register the signal handler for SIGINT and SIGTERM
@@ -73,13 +72,11 @@ def main():
         stm_process
     ])
 
-    bluetooth_process.start()
-    server_process.start()
-    stm_process.start()
+    for p in processes:
+        p.start()
 
-    bluetooth_process.join()
-    server_process.join()
-    stm_process.join()
+    for p in processes:
+        p.join()
 
     # drive_speed = 40
     # drive_angle = 25
