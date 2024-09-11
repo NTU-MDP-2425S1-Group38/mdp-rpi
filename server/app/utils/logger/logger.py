@@ -27,4 +27,4 @@ def init_logger() -> None:
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
     console_handler.setFormatter(logging.Formatter(log_format, date_format))
-    # logging.getLogger().addHandler(console_handler)
+    logging.getLogger().addHandler(console_handler)
