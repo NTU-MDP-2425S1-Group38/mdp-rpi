@@ -27,5 +27,5 @@ async def capture():
     # state = GameState().capture_and_process_image()
     # return state
     cam = Camera()
-    cam.capture()
-    return ""
+    img = cam.capture()
+    return img
