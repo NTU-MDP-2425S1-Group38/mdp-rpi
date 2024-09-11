@@ -6,7 +6,6 @@ python3.11 -m venv --system-site-packages /home/user/mdp-rpi/server/app/venv
 
 echo "Activated venv; starting server"
 
-python /home/user/mdp-rpi/server/app/main.py
 
 echo "Listening for USB ports"
 
@@ -22,3 +21,5 @@ if [ -n "$usb_ports" ]; then
 else
   echo "No active USB ports found."
 fi
+
+python /home/user/mdp-rpi/server/app/main.py
