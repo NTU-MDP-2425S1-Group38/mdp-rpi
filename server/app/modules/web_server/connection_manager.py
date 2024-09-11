@@ -146,7 +146,7 @@ class ConnectionManager(metaclass=Singleton):
         loop = asyncio.get_event_loop()
         # If the loop is already running, use create_task and block until it's done
         if loop.is_running():
-            task = loop.create_task(self._broadcast_cv_req(uuid4(), image))
+            task = loop.create_task(self._broadcast_cv_req(str(uuid4()), image))
             loop.run_until_complete(task)
             return task.result()
         else:
