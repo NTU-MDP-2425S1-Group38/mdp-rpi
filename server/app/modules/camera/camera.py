@@ -53,7 +53,7 @@ class Camera(metaclass=Singleton):
             # #
             # self.logger.info("Image has been captured as np.Array!")
 
-            # self.cam.stop()
+            self.cam.stop()
 
 
             # Move the pointer to the beginning of the BytesIO buffer
@@ -61,6 +61,8 @@ class Camera(metaclass=Singleton):
 
             # Convert the BytesIO buffer to base64
             image_base64 = base64.b64encode(image_stream.getvalue()).decode('utf-8')
+
+            self.logger.info(image_base64)
 
             self.logger.info("Image has been captured as base64!")
 
