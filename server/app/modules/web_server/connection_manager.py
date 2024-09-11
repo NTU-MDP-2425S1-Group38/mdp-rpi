@@ -48,15 +48,13 @@ class ConnectionManager(metaclass=Singleton):
         try:
             # Try to get the running event loop
             loop = asyncio.get_running_loop()
-            self.logger.info("Event loop is running, scheduling coroutine")
+            self.logger.info("Event loop is running, creating task")
 
-            # Use run_coroutine_threadsafe to execute the coroutine in the existing loop
-            future = asyncio.run_coroutine_threadsafe(coro, loop)
+            # Create a task and run it in the existing event loop
+            task = asyncio.ensure_future(coro)
 
-            self.logger.info("Waiting for future!")
-
-            # Block until the future is done and return the result
-            return future.result()  # This will block until the task completes
+            # Use loop.run_until_complete if called from the main thread
+            return loop.run_until_complete(task)
         except RuntimeError:  # No event loop is running
             self.logger.warning("No running loop, using asyncio.run()")
             return asyncio.run(coro)
@@ -119,6 +117,8 @@ class ConnectionManager(metaclass=Singleton):
     """
 
     async def _broadcast_cv_req(self, req_id:str, image: str) -> Optional[ObstacleLabel]:
+
+        self.logger.info("Entering _broadcast_cv_req")
 
         if not self.connections:
             self.logger.error("No slave connections available to process cv!")
