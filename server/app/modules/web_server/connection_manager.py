@@ -55,22 +55,21 @@ class ConnectionManager(metaclass=Singleton):
             payload=SlaveWorkRequestPayloadAlgo(obstacles=[SlaveObstacle(**i.model_dump()) for i in obstacles])
         ).model_dump_json()
 
-        async def send_and_receive(websocket: WebSocket) -> Optional[AlgoCommandResponse]:
+        async def send_and_receive(websocket: WebSocket) -> Optional[CvResponse]:
             await websocket.send_text(req)
             response = await websocket.receive_json()
             try:
-                parsed = AlgoCommandResponse(**response)
+                parsed = CvResponse(**response)
                 if parsed.id != req_id:
                     self.logger.warning("Race condition! Received a mismatched ID from request!")
                     return None
 
                 return parsed
             except ValidationError:
-                self.logger.error("Unable to parse AlgoCommandResponse!")
+                self.logger.error("Unable to parse CvResponse!")
                 return None
 
-
-        tasks = [send_and_receive(conn) for conn in self.connections]
+        tasks = [asyncio.create_task(send_and_receive(conn)) for conn in self.connections]
 
         # Await for the first non-null response
         while tasks:
@@ -142,15 +141,6 @@ class ConnectionManager(metaclass=Singleton):
 
     def slave_request_cv(self, image: str) -> Optional[ObstacleLabel]:
         self.logger.info("Sending CV request to slaves!")
-
-        loop = asyncio.get_event_loop()
-        # If the loop is already running, use create_task and block until it's done
-        if loop.is_running():
-            task = loop.create_task(self._broadcast_cv_req(str(uuid4()), image))
-            loop.run_until_complete(task)
-            return task.result()
-        else:
-            # If no loop is running, just run until completion
-            return loop.run_until_complete(self._broadcast_cv_req(str(uuid4()), image))
+        return asyncio.run(self._broadcast_cv_req(str(uuid4()), image))
 
 
