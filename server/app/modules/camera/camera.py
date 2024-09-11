@@ -36,17 +36,20 @@ class Camera:
         :return: Base64 image
         """
 
-        self.logger.info("Capturing image!")
+        with threading.Lock():
+            self.logger.info("Capturing image!")
 
-        # Create a BytesIO object to store the image in memory
-        image_stream = io.BytesIO()
+            # Create a BytesIO object to store the image in memory
+            image_stream = io.BytesIO()
 
-        self.logger.info("Created bytes array")
+            self.logger.info("Created bytes array")
 
-        # Capture the image in JPEG format
-        print(self.cam.capture_array())
+            # Capture the image in JPEG format
+            print(self.cam.capture_array())
 
-        self.logger.info("Image has been captured as np.Array!")
+            self.logger.info("Image has been captured as np.Array!")
+
+            return ""
 
         # # Move the pointer to the beginning of the BytesIO buffer
         # image_stream.seek(0)
