@@ -120,13 +120,12 @@ class ConnectionManager(metaclass=Singleton):
     CV RELATED STUFF
     """
 
-    async def _broadcast_cv_req(self, req_id:str, image: str) -> Optional[ObstacleLabel]:
-
+    async def _broadcast_cv_req(self, req_id: str, image: str) -> Optional[ObstacleLabel]:
         self.logger.info("Entering _broadcast_cv_req")
 
         if not self.connections:
             self.logger.error("No slave connections available to process cv!")
-            return ObstacleLabel.Unknown
+            return None
 
         req = SlaveWorkRequest(
             id=req_id,
@@ -134,7 +133,7 @@ class ConnectionManager(metaclass=Singleton):
             payload=SlaveWorkRequestPayloadImageRecognition(image=image)
         ).model_dump_json()
 
-        self.logger.info(f"Created request object!")
+        self.logger.info("Created request object!")
 
         async def send_and_receive(websocket: WebSocket) -> Optional[CvResponse]:
             await websocket.send_text(req)
@@ -145,14 +144,39 @@ class ConnectionManager(metaclass=Singleton):
                 if parsed.id != req_id:
                     self.logger.warning("Race condition! Received a mismatched ID from request!")
                     return None
-
                 return parsed
             except ValidationError:
                 self.logger.error("Unable to parse CvResponse!")
                 return None
 
+        # Create tasks from the coroutine for each connection
+        tasks = [asyncio.create_task(send_and_receive(conn)) for conn in self.connections]
 
-        tasks = [send_and_receive(conn) for conn in self.connections]
+        try:
+            # Await for the first non-null response
+            while tasks:
+                done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+
+                for task in done:
+                    try:
+                        result = await task
+                        if result:  # Check if the result is non-null
+                            # Cancel any remaining tasks since we have a valid result
+                            for pending_task in pending:
+                                pending_task.cancel()
+                            return result
+                    except Exception as e:
+                        self.logger.error(f"Error processing response: {str(e)}")
+
+                # If no valid result, keep waiting for other tasks
+                tasks = list(pending)
+
+        except Exception as e:
+            self.logger.error(f"Error during waiting for tasks: {str(e)}")
+            for task in tasks:
+                task.cancel()
+
+        return None  # Return None if no valid responses are obtained
 
         # Await for the first non-null response
         while tasks:
