@@ -23,7 +23,7 @@ class Camera(metaclass=Singleton):
         self.lock = threading.Lock()
 
         # Configure the camera for capturing still images
-        config = self.cam.create_still_configuration(queue=False)
+        config = self.cam.create_still_configuration(queue=False, main={"size": (640, 640)})
 
         # Configure and start the camera
         self.cam.configure(config)
