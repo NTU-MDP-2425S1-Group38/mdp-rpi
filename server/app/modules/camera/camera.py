@@ -22,10 +22,10 @@ class Camera:
         self.cam = picamera2.Picamera2()
 
         # Configure the camera for capturing still images
-        config = self.cam.create_still_configuration(main={"size": (640, 640)})
+        # config = self.cam.create_still_configuration(main={"size": (640, 640)})
 
         # Configure and start the camera
-        self.cam.configure(config)
+        # self.cam.configure(config)
         self.cam.start()
         self.logger.info("Camera has started!")
 
@@ -45,7 +45,7 @@ class Camera:
             self.logger.info("Created bytes array")
 
             # Capture the image in JPEG format
-            print(self.cam.capture_array())
+            self.logger.info(self.cam.capture_array())
 
             self.logger.info("Image has been captured as np.Array!")
 
