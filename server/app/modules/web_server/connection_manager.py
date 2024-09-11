@@ -46,6 +46,8 @@ class ConnectionManager(metaclass=Singleton):
         self.logger.info("Attempting to run async coroutine")
         try:
             loop = asyncio.get_running_loop()
+            if loop.is_running():
+                raise RuntimeError("Loop already running!")
         except RuntimeError:  # No event loop is running
             self.logger.warning("Unable to get loop, running as stand alone")
             return asyncio.run(coro)
