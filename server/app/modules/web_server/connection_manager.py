@@ -128,8 +128,11 @@ class ConnectionManager(metaclass=Singleton):
             payload=SlaveWorkRequestPayloadImageRecognition(image=image)
         ).model_dump_json()
 
+        self.logger.info(f"Created request object! {req}")
+
         async def send_and_receive(websocket: WebSocket) -> Optional[CvResponse]:
             await websocket.send_text(req)
+            self.logger.info("Sending request to slave!")
             response = await websocket.receive_json()
             try:
                 parsed = CvResponse(**response)
