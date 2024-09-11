@@ -38,6 +38,19 @@ class ConnectionManager(metaclass=Singleton):
         logging.getLogger().info("Removing websocket observer from ConnectionManager")
         self.observers.remove(websocket)
 
+    """
+    PRIVATE METHODS
+    """
+
+    @staticmethod
+    def _run_async(coro):
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:  # No event loop is running
+            return asyncio.run(coro)
+        else:
+            return loop.run_until_complete(coro)
+
 
     """
     ALGO RELATED STUFF
@@ -141,6 +154,6 @@ class ConnectionManager(metaclass=Singleton):
 
     def slave_request_cv(self, image: str) -> Optional[ObstacleLabel]:
         self.logger.info("Sending CV request to slaves!")
-        return asyncio.run(self._broadcast_cv_req(str(uuid4()), image))
+        return self._run_async(self._broadcast_cv_req(str(uuid4()), image))
 
 
