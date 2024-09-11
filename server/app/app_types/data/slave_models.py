@@ -36,13 +36,3 @@ class SlaveWorkRequest(BaseModel):
     type: SlaveWorkRequestType
     payload: Union[SlaveWorkRequestPayloadAlgo, SlaveWorkRequestPayloadImageRecognition]
 
-    @classmethod
-    @field_validator("payload", mode="before")
-    def __validate_payload(cls, value, values):
-        if values["type"] == SlaveWorkRequestType.Algorithm:
-            return SlaveWorkRequestPayloadAlgo(**value)
-        if values["type"] == SlaveWorkRequestType.ImageRecognition:
-            return SlaveWorkRequestPayloadImageRecognition(**value)
-
-        raise ValidationError("'Type' not defined in request!")
-
