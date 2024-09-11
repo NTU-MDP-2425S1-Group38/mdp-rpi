@@ -49,7 +49,7 @@ class Camera(metaclass=Singleton):
             self.logger.info("Created bytes array")
 
             # Capture the image in JPEG format
-            self.logger.info(self.cam.capture_array("raw"))
+            self.logger.info(self.cam.capture_array())
             #
             self.logger.info("Image has been captured as np.Array!")
 
