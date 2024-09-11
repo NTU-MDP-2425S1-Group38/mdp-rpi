@@ -29,6 +29,8 @@ class Camera(metaclass=Singleton):
         self.cam.start()
         self.logger.info("Camera has started!")
 
+        self.lock = threading.Lock()
+
 
     def capture(self) -> str:
         """
@@ -36,7 +38,7 @@ class Camera(metaclass=Singleton):
         :return: Base64 image
         """
 
-        with threading.Lock():
+        with self.lock:
             self.logger.info("Capturing image!")
 
             # Create a BytesIO object to store the image in memory
