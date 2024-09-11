@@ -138,7 +138,7 @@ class ConnectionManager(metaclass=Singleton):
             payload=SlaveWorkRequestPayloadImageRecognition(image=image)
         ).model_dump_json()
 
-        self.logger.info(f"Created request object! {req}")
+        self.logger.info(f"Created request object!")
 
         async def send_and_receive(websocket: WebSocket) -> Optional[CvResponse]:
             await websocket.send_text(req)
@@ -175,6 +175,6 @@ class ConnectionManager(metaclass=Singleton):
 
     def slave_request_cv(self, image: str) -> Optional[ObstacleLabel]:
         self.logger.info("Sending CV request to slaves!")
-        return self._run_async(self._broadcast_cv_req(str(uuid4()), image))
+        return asyncio.run(self._broadcast_cv_req(str(uuid4()), image))
 
 
