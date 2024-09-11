@@ -23,7 +23,7 @@ class Camera(metaclass=Singleton):
         self.lock = threading.Lock()
 
         # Configure the camera for capturing still images
-        config = self.cam.create_still_configuration(queue=False, main={"size": (640, 640)})
+        config = self.cam.create_still_configuration(queue=False)
 
         # Configure and start the camera
         self.cam.configure(config)
@@ -55,7 +55,7 @@ class Camera(metaclass=Singleton):
             self.cam.stop()
 
             pil_img = Image.fromarray(img)
-            pil_img.save(image_stream, format="JPEG")
+            pil_img.save(image_stream, format="JPEG", quality=40)
 
             return base64.b64encode(image_stream.getvalue()).decode("utf-8")
 
