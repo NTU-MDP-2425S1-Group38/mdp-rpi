@@ -45,19 +45,27 @@ class ConnectionManager(metaclass=Singleton):
 
     def _run_async(self, coro):
         self.logger.info("Attempting to run async coroutine")
+        # try:
+        #     # Try to get the running event loop
+        #     loop = asyncio.get_running_loop()
+        #     self.logger.info("Event loop is running, creating task")
+        #
+        #     # Create a task and run it in the existing event loop
+        #     task = asyncio.ensure_future(coro)
+        #
+        #     # Use loop.run_until_complete if called from the main thread
+        #     return loop.run_until_complete(task)
+        # except RuntimeError:  # No event loop is running
+        #     self.logger.warning("No running loop, using asyncio.run()")
+        #     return asyncio.run(coro)
         try:
-            # Try to get the running event loop
             loop = asyncio.get_running_loop()
-            self.logger.info("Event loop is running, creating task")
-
-            # Create a task and run it in the existing event loop
-            task = asyncio.ensure_future(coro)
-
-            # Use loop.run_until_complete if called from the main thread
-            return loop.run_until_complete(task)
-        except RuntimeError:  # No event loop is running
-            self.logger.warning("No running loop, using asyncio.run()")
+        except RuntimeError:
+            # No running loop, so we can safely use asyncio.run
             return asyncio.run(coro)
+
+            # If we have a running loop, create a task to run the coroutine
+        return asyncio.create_task(coro)
 
 
     """
