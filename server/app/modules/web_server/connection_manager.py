@@ -142,6 +142,15 @@ class ConnectionManager(metaclass=Singleton):
 
     def slave_request_cv(self, image: str) -> Optional[ObstacleLabel]:
         self.logger.info("Sending CV request to slaves!")
-        return asyncio.run(self._broadcast_cv_req(uuid4(), image))
+
+        loop = asyncio.get_event_loop()
+        # If the loop is already running, use create_task and block until it's done
+        if loop.is_running():
+            task = loop.create_task(self._broadcast_cv_req(uuid4(), image))
+            loop.run_until_complete(task)
+            return task.result()
+        else:
+            # If no loop is running, just run until completion
+            return loop.run_until_complete(self._broadcast_cv_req(uuid4(), image))
 
 
