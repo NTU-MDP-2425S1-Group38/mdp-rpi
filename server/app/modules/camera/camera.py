@@ -39,6 +39,7 @@ class Camera(metaclass=Singleton):
 
         with self.lock:
 
+            self.cam.start()
 
             self.logger.info("Capturing image!")
 
