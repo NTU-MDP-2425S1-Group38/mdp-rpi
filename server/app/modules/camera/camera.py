@@ -4,7 +4,6 @@ import logging
 import threading
 
 import picamera2
-
 from utils.metaclass.singleton import Singleton
 
 
@@ -21,7 +20,7 @@ class Camera(metaclass=Singleton):
         self.logger.info("Starting Picamera!")
         self.cam = picamera2.Picamera2()
 
-        # self.lock = threading.Lock()
+        self.lock = threading.Lock()
 
         # Configure the camera for capturing still images
         config = self.cam.create_still_configuration(queue=False)
@@ -38,24 +37,24 @@ class Camera(metaclass=Singleton):
         :return: Base64 image
         """
 
-        # with self.lock:
+        with self.lock:
 
 
-        self.logger.info("Capturing image!")
+            self.logger.info("Capturing image!")
 
-        # Create a BytesIO object to store the image in memory
-        image_stream = io.BytesIO()
+            # Create a BytesIO object to store the image in memory
+            image_stream = io.BytesIO()
 
-        self.logger.info("Created bytes array")
+            self.logger.info("Created bytes array")
 
-        # Capture the image in JPEG format
-        self.logger.info(self.cam.capture_array("raw"))
-        #
-        self.logger.info("Image has been captured as np.Array!")
+            # Capture the image in JPEG format
+            self.logger.info(self.cam.capture_array("raw"))
+            #
+            self.logger.info("Image has been captured as np.Array!")
 
-        self.cam.stop()
+            self.cam.stop()
 
-        return ""
+            return ""
 
         # # Move the pointer to the beginning of the BytesIO buffer
         # image_stream.seek(0)

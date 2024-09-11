@@ -50,36 +50,38 @@ def main():
     load_dotenv()
     init_logger()
 
-    _ = GameState()
+    # processes = []
+    #
+    # def signal_handler(signum, frame):
+    #     logging.getLogger().info("Received termination signal. Shutting down gracefully...")
+    #     for process in processes:
+    #         process.kill()
+    #
+    #     sys.exit(0)
+    #
+    # # Register the signal handler for SIGINT and SIGTERM
+    # signal.signal(signal.SIGINT, signal_handler)
+    # signal.signal(signal.SIGTERM, signal_handler)
+    #
+    # server_process = Process(target=run_web_server)
+    # bluetooth_process = Process(target=run_bluetooth_server)
+    # stm_process = Process(target=run_stm)
+    #
+    # processes.extend([
+    #     server_process,
+    #     bluetooth_process,
+    #     stm_process
+    # ])
+    #
+    # for p in processes:
+    #     p.start()
+    #
+    # for p in processes:
+    #     p.join()
 
-    processes = []
-
-    def signal_handler(signum, frame):
-        logging.getLogger().info("Received termination signal. Shutting down gracefully...")
-        for process in processes:
-            process.kill()
-
-        sys.exit(0)
-
-    # Register the signal handler for SIGINT and SIGTERM
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-
-    server_process = Process(target=run_web_server)
-    bluetooth_process = Process(target=run_bluetooth_server)
-    stm_process = Process(target=run_stm)
-
-    processes.extend([
-        server_process,
-        bluetooth_process,
-        stm_process
-    ])
-
-    for p in processes:
-        p.start()
-
-    for p in processes:
-        p.join()
+    cam = Camera
+    while True:
+        cam.capture()
 
 
 
