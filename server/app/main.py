@@ -9,6 +9,7 @@ from multiprocessing import Process
 from dotenv import load_dotenv
 
 from modules.camera.camera import Camera
+from modules.gamestate.gamestate import GameState
 from modules.web_server.web_server import WebServer
 from modules.serial.stm32 import STM
 from modules.serial.android import Android
@@ -48,6 +49,8 @@ def run_stm():
 def main():
     load_dotenv()
     init_logger()
+
+    gamestate = GameState()
 
     processes = []
 
