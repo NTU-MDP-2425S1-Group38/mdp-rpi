@@ -42,13 +42,15 @@ class ConnectionManager(metaclass=Singleton):
     PRIVATE METHODS
     """
 
-    @staticmethod
-    def _run_async(coro):
+    def _run_async(self, coro):
+        self.logger.info("Attempting to run async coroutine")
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:  # No event loop is running
+            self.logger.warning("Unable to get loop, running as stand alone")
             return asyncio.run(coro)
         else:
+            self.logger.info("Acquired loop; running in loop")
             return loop.run_until_complete(coro)
 
 
