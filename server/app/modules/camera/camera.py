@@ -40,21 +40,23 @@ class Camera(metaclass=Singleton):
 
         self.logger.info("Capturing image!")
 
-        # Create a BytesIO object to store the image in memory
-        image_stream = io.BytesIO()
+        # # Create a BytesIO object to store the image in memory
+        # image_stream = io.BytesIO()
+        #
+        # # Capture the image in JPEG format
+        # self.cam.capture_file(image_stream, format='jpeg')
+        #
+        # self.logger.info("Image has been captured as bytes!")
+        #
+        # # Move the pointer to the beginning of the BytesIO buffer
+        # image_stream.seek(0)
+        #
+        # # Convert the BytesIO buffer to base64
+        # image_base64 = base64.b64encode(image_stream.getvalue()).decode('utf-8')
+        #
+        # self.logger.info("Image has been captured as base64!")
+        #
+        # return image_base64
 
-        # Capture the image in JPEG format
-        self.cam.capture_file(image_stream, format='jpeg')
-
-        self.logger.info("Image has been captured as bytes!")
-
-        # Move the pointer to the beginning of the BytesIO buffer
-        image_stream.seek(0)
-
-        # Convert the BytesIO buffer to base64
-        image_base64 = base64.b64encode(image_stream.getvalue()).decode('utf-8')
-
-        self.logger.info("Image has been captured as base64!")
-
-        return image_base64
+        return ""
 
