@@ -48,26 +48,13 @@ class ConnectionManager(metaclass=Singleton):
         try:
             # Try to get the running event loop
             loop = asyncio.get_running_loop()
-            self.logger.info("Event loop is running, scheduling the task")
+            self.logger.info("Event loop is running, scheduling coroutine")
 
-            # Create a Future object
-            future = Future()
+            # Use run_coroutine_threadsafe to execute the coroutine in the existing loop
+            future = asyncio.run_coroutine_threadsafe(coro, loop)
 
-            # Define a callback to set the result when the task completes
-            def on_complete(task_coro):
-                try:
-                    # Set the result of the Future to the result of the coroutine
-                    future.set_result(task_coro.result())
-                except Exception as e:
-                    future.set_exception(e)
-
-            # Schedule the coroutine and attach the callback
-            task = asyncio.ensure_future(coro)
-            task.add_done_callback(on_complete)
-
-            # Block the synchronous function until the Future is complete
-            return future.result()
-
+            # Block until the future is done and return the result
+            return future.result()  # This will block until the task completes
         except RuntimeError:  # No event loop is running
             self.logger.warning("No running loop, using asyncio.run()")
             return asyncio.run(coro)
