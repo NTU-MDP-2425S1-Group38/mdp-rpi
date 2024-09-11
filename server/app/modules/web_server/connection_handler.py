@@ -13,7 +13,7 @@ async def connection_handler(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            await websocket.send_text(data)
+            # await websocket.send_text(data)
     except WebSocketDisconnect:
         ConnectionManager().remove_connection(websocket)
 
