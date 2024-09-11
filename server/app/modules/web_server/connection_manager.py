@@ -90,17 +90,17 @@ class ConnectionManager(metaclass=Singleton):
 
     def slave_request_algo(self, obstacles: List[Obstacle]) -> List[Command]:
         self.logger.info("Sending Algo request to slaves!")
-        return asyncio.get_event_loop().run_until_complete(self._broadcast_algo_req(uuid4(), obstacles))
+        return asyncio.run(self._broadcast_algo_req(uuid4(), obstacles))
 
     """
     CV RELATED STUFF
     """
 
-    async def _broadcast_cv_req(self, req_id:str, image: str) -> List[Command]:
+    async def _broadcast_cv_req(self, req_id:str, image: str) -> Optional[ObstacleLabel]:
 
         if not self.connections:
             self.logger.error("No slave connections available to process cv!")
-            return []
+            return ObstacleLabel.Unknown
 
         req = SlaveWorkRequest(
             id=req_id,
@@ -142,6 +142,6 @@ class ConnectionManager(metaclass=Singleton):
 
     def slave_request_cv(self, image: str) -> Optional[ObstacleLabel]:
         self.logger.info("Sending CV request to slaves!")
-        return asyncio.get_event_loop().run_until_complete(self._broadcast_cv_req(uuid4(), image))
+        return asyncio.run(self._broadcast_cv_req(uuid4(), image))
 
 
