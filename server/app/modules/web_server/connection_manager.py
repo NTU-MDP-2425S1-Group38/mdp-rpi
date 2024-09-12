@@ -108,7 +108,7 @@ class ConnectionManager(metaclass=Singleton):
     CV RELATED STUFF
     """
 
-    async def _broadcast_cv_req(self, req_id: str, image: str) -> Optional[ObstacleLabel]:
+    async def _broadcast_cv_req(self, req_id: str, image: str) -> None:
         self.logger.info("Entering _broadcast_cv_req")
 
         if not self.connections:
@@ -121,7 +121,7 @@ class ConnectionManager(metaclass=Singleton):
             payload=SlaveWorkRequestPayloadImageRecognition(image=image)
         ).model_dump_json()
 
-        tasks = [asyncio.create_task(lambda: c.send_text(req)) for c in self.connections]
+        tasks = [asyncio.create_task(c.send_text(req)) for c in self.connections]
         
         await asyncio.gather(*tasks)
 
