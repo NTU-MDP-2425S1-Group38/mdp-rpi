@@ -45,7 +45,6 @@ def run_stm():
     stm.connect()
 
 
-
 def main():
     load_dotenv()
     init_logger()
@@ -53,7 +52,9 @@ def main():
     processes = []
 
     def signal_handler(signum, frame):
-        logging.getLogger().info("Received termination signal. Shutting down gracefully...")
+        logging.getLogger().info(
+            "Received termination signal. Shutting down gracefully..."
+        )
         for process in processes:
             process.kill()
 
@@ -67,11 +68,7 @@ def main():
     bluetooth_process = Process(target=run_bluetooth_server)
     stm_process = Process(target=run_stm)
 
-    processes.extend([
-        server_process,
-        bluetooth_process,
-        stm_process
-    ])
+    processes.extend([server_process, bluetooth_process, stm_process])
 
     for p in processes:
         p.start()
@@ -82,7 +79,6 @@ def main():
     # cam = Camera()
     # while True:
     #     cam.capture()
-
 
 
 if __name__ == "__main__":

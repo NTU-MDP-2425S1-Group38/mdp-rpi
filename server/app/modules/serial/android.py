@@ -175,7 +175,7 @@ class Android(metaclass=Singleton):
 
         ### TESTING
         # Currently reflect sent message back to the tablet
-
+        self.stm.connect()
         while True:
             message_rcv = None
             try:
