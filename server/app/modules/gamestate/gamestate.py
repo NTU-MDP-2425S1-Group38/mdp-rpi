@@ -1,8 +1,10 @@
 import logging
+from collections.abc import Callable
 from typing import Literal, List, Optional
 
 from app_types.obstacle import Obstacle
-from app_types.primatives.command import CommandInstruction, MoveInstruction
+from app_types.primatives.command import CommandInstruction, MoveInstruction, AlgoCommandResponse
+from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
 from utils.instructions import Instructions
 from modules.camera.camera import Camera
@@ -41,17 +43,44 @@ class GameState(metaclass=Singleton):
     CV methods
     """
 
-    def capture_and_process_image(self) -> Optional[ObstacleLabel]:
+    def capture_and_process_image(self, callback: Callable[[CvResponse], None] = lambda x: print(x)) -> None:
         self.logger.info("Capturing image!")
         image_b64 = self.camera.capture()
         self.logger.info("Captured image as b64!")
-        self.connection_manager.slave_request_cv(image_b64, lambda x: print(x))
-        return None
+        self.connection_manager.slave_request_cv(image_b64, callback)
+        return
+
+    def _update_obstacle_label_after_cv(self, obstacle_id: int, cv_response: CvResponse) -> None:
+
+        if cv_response.label == ObstacleLabel.Unknown:
+            self.logger.warning("Received UNKNOWN as obstacle label, exiting _update_obstacle_label_after_cv")
+            return
+
+        obstacle_index = next((i for i, obs in enumerate(self.obstacles) if obs.id == obstacle_id), None)
+
+        if not obstacle_index:
+            self.logger.warning(f"Obstacle {obstacle_id} not found in gamestate, exiting _update_obstacle_label_after_cv")
+            return
+
+        # Update label internally
+        self.obstacles[obstacle_index].label = cv_response.label
+
+        # TODO update android of updated label
+
+    def capture_and_update_label(self, obstacle_id: int) -> None:
+        self.capture_and_process_image(lambda res: self._update_obstacle_label_after_cv(obstacle_id, res))
 
 
     """
-    Public method to update gamestate
+    Algo methods
     """
+
+    def _algo_response_callback(self, response: AlgoCommandResponse) -> None:
+        commands = response.commands
+        self.logger.info(f"Received {len(commands)} from the server!")
+        self.instruction.add(commands)
+        return
+
 
     def set_obstacles(self, *obstacles: Obstacle) -> None:
         """
@@ -62,10 +91,8 @@ class GameState(metaclass=Singleton):
         """
         self.obstacles = list(obstacles)
         self.logger.info("Requesting for commands from algo server!")
+        self.connection_manager.slave_request_algo(self.obstacles, self._algo_response_callback)
 
-        commands = self.connection_manager.slave_request_algo(self.obstacles)
-        self.logger.info(f"Received {len(commands)} from the server!")
-        self.instruction.add(commands)
 
     """
     Methods related to task 1.
