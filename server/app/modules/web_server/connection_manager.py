@@ -133,65 +133,8 @@ class ConnectionManager(metaclass=Singleton):
             payload=SlaveWorkRequestPayloadImageRecognition(image=image)
         ).model_dump_json()
 
-        self.logger.info("Created request object!")
-
-        async def send_and_receive(websocket: WebSocket) -> Optional[CvResponse]:
-            await websocket.send_text(req)
-            self.logger.info("Sending request to slave!")
-            response = await websocket.receive_json()
-            try:
-                parsed = CvResponse(**response)
-                if parsed.id != req_id:
-                    self.logger.warning("Race condition! Received a mismatched ID from request!")
-                    return None
-                return parsed
-            except ValidationError:
-                self.logger.error("Unable to parse CvResponse!")
-                return None
-
-        # Create tasks from the coroutine for each connection
-        tasks = [asyncio.create_task(send_and_receive(conn)) for conn in self.connections]
-
-        try:
-            # Await for the first non-null response
-            while tasks:
-                done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-
-                for task in done:
-                    try:
-                        result = await task
-                        if result:  # Check if the result is non-null
-                            # Cancel any remaining tasks since we have a valid result
-                            for pending_task in pending:
-                                pending_task.cancel()
-                            return result
-                    except Exception as e:
-                        self.logger.error(f"Error processing response: {str(e)}")
-
-                # If no valid result, keep waiting for other tasks
-                tasks = list(pending)
-
-        except Exception as e:
-            self.logger.error(f"Error during waiting for tasks: {str(e)}")
-            for task in tasks:
-                task.cancel()
-
-        return None  # Return None if no valid responses are obtained
-
-        # Await for the first non-null response
-        while tasks:
-            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-
-            for task in done:
-                result = await task
-                if result:  # Check if the result is non-null
-                    # Cancel any remaining tasks since we have a valid result
-                    for pending_task in pending:
-                        pending_task.cancel()
-                    return result
-
-            # If no valid result, keep waiting for other tasks
-            tasks = list(pending)
+        for c in self.connections:
+            await c.send_text(req)
 
     def slave_request_cv(self, image: str) -> Optional[ObstacleLabel]:
         self.logger.info("Sending CV request to slaves!")
