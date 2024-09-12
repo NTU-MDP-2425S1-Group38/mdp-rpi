@@ -2,7 +2,7 @@ import asyncio
 import logging
 from asyncio import Future
 from collections import defaultdict
-from typing import List, Optional, Dict, Set, Coroutine
+from typing import List, Optional, Dict, Set, Coroutine, Callable, Union
 from uuid import uuid4
 
 from fastapi import WebSocket
@@ -22,7 +22,7 @@ class ConnectionManager(metaclass=Singleton):
     connections: List[WebSocket] = []
     observers: List[WebSocket] = []
     logger = logging.getLogger("Connection Manager")
-    pending_responses = {}
+    pending_responses: Dict[str, Callable[[Union[AlgoCommandResponse, CvResponse]],None]] = {}
 
     async def connect(self, websocket: WebSocket) -> None:
         logging.getLogger().info("Adding websocket to all connections in ConnectionManager")
@@ -69,41 +69,25 @@ class ConnectionManager(metaclass=Singleton):
             payload=SlaveWorkRequestPayloadAlgo(obstacles=[SlaveObstacle(**i.model_dump()) for i in obstacles])
         ).model_dump_json()
 
-        async def send_and_receive(websocket: WebSocket) -> Optional[CvResponse]:
-            await websocket.send_text(req)
-            response = await websocket.receive_json()
-            try:
-                parsed = CvResponse(**response)
-                if parsed.id != req_id:
-                    self.logger.warning("Race condition! Received a mismatched ID from request!")
-                    return None
+        tasks = [asyncio.create_task(c.send_text(req)) for c in self.connections]
 
-                return parsed
-            except ValidationError:
-                self.logger.error("Unable to parse CvResponse!")
-                return None
+        await asyncio.gather(*tasks)
 
-        tasks = [asyncio.create_task(send_and_receive(conn)) for conn in self.connections]
+    def handle_algo_response_callback(self, response:AlgoCommandResponse) -> None:
+        self.logger.info(f"Activating algo callback for {response.id}")
+        if response.id in self.pending_responses.keys():
+            self.logger.info(f"Running callback for {response.id}")
+            self.pending_responses[response.id](response)
+            self.pending_responses.pop(response.id, None)
+            return
+        self.logger.info(f"Matching callback no longer found for {response.id}! Has it been executed?")
 
-        # Await for the first non-null response
-        while tasks:
-            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-
-            for task in done:
-                result = await task
-                if result:  # Check if the result is non-null
-                    # Cancel any remaining tasks since we have a valid result
-                    for pending_task in pending:
-                        pending_task.cancel()
-                    return result
-
-            # If no valid result, keep waiting for other tasks
-            tasks = list(pending)
-
-
-    def slave_request_algo(self, obstacles: List[Obstacle]) -> List[Command]:
+    def slave_request_algo(self, obstacles: List[Obstacle], callback: Callable[[AlgoCommandResponse], None]) -> None:
         self.logger.info("Sending Algo request to slaves!")
-        return asyncio.run(self._broadcast_algo_req(str(uuid4()), obstacles))
+        req_id = str(uuid4())
+        self.pending_responses[req_id] = callback
+        asyncio.run(self._broadcast_algo_req(req_id, obstacles))
+        # TODO implement callback logic
 
     """
     CV RELATED STUFF
@@ -127,15 +111,19 @@ class ConnectionManager(metaclass=Singleton):
         await asyncio.gather(*tasks)
 
     def handle_cv_response_callback(self, response:CvResponse) -> None:
+        self.logger.info(f"Activating CV callback for {response.id}")
         if response.id in self.pending_responses.keys():
+            self.logger.info(f"Running callback for {response.id}")
             self.pending_responses[response.id](response)
             self.pending_responses.pop(response.id, None)
+            return
+        self.logger.info(f"Matching callback no longer found for {response.id}! Has it been executed?")
 
 
-    def slave_request_cv(self, image: str, callback: any) -> None:
+    def slave_request_cv(self, image: str, callback: Callable[[CvResponse], None]) -> None:
         """
         :param image: base64 string of image
-        :param callback: callback function that takes `CvResponse` as the only arg
+        :param callback: callback function that takes `CvResponse` as the only arg, and returns None.
         :return: None
         """
         self.logger.info("Sending CV request to slaves!")
