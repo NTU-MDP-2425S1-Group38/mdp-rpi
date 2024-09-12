@@ -9,7 +9,11 @@ from typing import Optional
 
 import bluetooth
 
+from modules.gamestate.gamestate import GameState
+
 from utils.metaclass.singleton import Singleton
+from app_types.obstacle import Obstacle
+
 from .link import Link
 
 
@@ -55,22 +59,9 @@ class AndroidMessage:
         return json.dumps({"type": self._type, "value": self._value})
 
 
-# class AndroidDummy:
-#     def connect(self):
-#         print("Connected to Android dummy.")
-
-#     def disconnect(self):
-#         print("Disconnected from Android dummy.")
-
-#     def send(self, message):
-#         print(f"Sent {message} to Android dummy.")
-
-#     def receive(self):
-#         while True:
-#             pass
-
-
 class Android(metaclass=Singleton):
+    gamestate: GameState
+
     def __init__(self):
         """
         Initialize the Bluetooth connection.
@@ -83,6 +74,7 @@ class Android(metaclass=Singleton):
         self.client_socket = None
         self.server_socket = None
         self.logger = logging.getLogger()
+        self.obstacle_dict: dict[str, Obstacle] = {}
 
     def connect(self):
         """
@@ -113,7 +105,9 @@ class Android(metaclass=Singleton):
 
             self.logger.info(f"Awaiting bluetooth connection on port: {port}")
             self.client_socket, client_address = self.server_socket.accept()
-            self.logger.info(f"Accepted connection from client address of: {str(client_address)}")
+            self.logger.info(
+                f"Accepted connection from client address of: {str(client_address)}"
+            )
             self.connected = True
 
         except Exception as e:
@@ -168,7 +162,6 @@ class Android(metaclass=Singleton):
             self.logger.error(f"Message failed to be received: {str(e)}")
             raise e
 
-
     def run(self) -> None:
         """
         Main running function in a while loop
@@ -176,12 +169,84 @@ class Android(metaclass=Singleton):
         """
 
         self.connect()
+        self.logger.info("Went into android receive function")
 
         ### TESTING
         # Currently reflect sent message back to the tablet
 
         while True:
-            msg = self.receive()
-            self.send(AndroidMessage("test", msg))
+            message_rcv = None
+            try:
+                message_rcv = self.receive()
+                messages = message_rcv.split("\n")
+                for message_rcv in messages:
+                    if len(message_rcv) == 0:
+                        continue
 
+                    self.logger.info("Message received from Android: %s", message_rcv)
+                    if "BEGIN" in message_rcv:
+                        self.logger.info("BEGINNNN!")
+                        # TODO: Begin Task 1
+                        self.gamestate.set_obstacles(self.obstacle_dict)
+                        self.start()  # Calculate the path
+                    elif "CLEAR" in message_rcv:
+                        print(
+                            " --------------- CLEARING OBSTACLES LIST. ---------------- "
+                        )
+                        self.obstacle_dict.clear()
+                    elif "OBSTACLE" in message_rcv:
+                        print("OBSTACLE!!!!")
+                        x, y, dir, id = message_rcv.split(",")[1:]
 
+                        id = int(id)
+
+                        if dir == "-1":
+                            if id in self.obstacle_dict:
+                                del self.obstacle_dict[id]
+                                print("Deleted obstacle", id)
+                        elif dir not in ["N", "S", "E", "W"]:
+                            print("Invalid direction provided:", dir + ", ignoring...")
+                            continue
+                        else:
+                            newObstacle = [
+                                dir,
+                                (int(x), int(y)),
+                                (10, 10),
+                                id,
+                            ]
+                            self.obstacle_dict[id] = newObstacle
+
+                            print("Obstacle set successfully: ", newObstacle)
+                        print(
+                            f"--------------- Current list {len(self.obstacle_dict)}: -------------"
+                        )
+                        obs_items = self.obstacle_dict.items()
+                        if len(obs_items) == 0:
+                            print("! no obstacles.")
+                        else:
+                            for id, obstacle in obs_items:
+                                print(f"{id}: {obstacle}")
+
+                    elif "ROBOT" in message_rcv:
+                        print("NEW ROBOT LOCATION!!!")
+                        x, y, dir = message_rcv.split(",")[1:]
+                        x, y = int(x), int(y)
+
+                        if x < 0 or y < 0:
+                            print("Illegal robot coordinate, ignoring...")
+                            continue
+
+                        self.robot = self.get_api_object(
+                            PathfindingRequestRobot, dir, (int(x), int(y)), (21, 21)
+                        )
+                        print("Robot set successfully: ", self.robot)
+                    else:
+                        # Catch for messages with no keywords (OBSTACLE/ROBOT/BEGIN)
+                        print("Not a keyword, message received: ", message_rcv)
+
+            except OSError:
+                # self.android_dropped.set()
+                print("Event set: Bluetooth connection dropped")
+
+            if message_rcv is None:
+                continue
