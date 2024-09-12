@@ -55,7 +55,7 @@ class Camera(metaclass=Singleton):
             self.cam.stop()
 
             pil_img = Image.fromarray(img)
-            pil_img.save(image_stream, format="JPEG", quality=40)
+            pil_img.save(image_stream, format="JPEG", quality=70)
 
             return base64.b64encode(image_stream.getvalue()).decode("utf-8")
 
