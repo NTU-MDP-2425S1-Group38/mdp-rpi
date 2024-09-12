@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Union, List
+from typing import Union, List, Optional
 
 from pydantic import BaseModel, Field, field_validator, ValidationError
 
@@ -42,6 +42,7 @@ class Command(BaseModel):
     cat:str = Field(default="control")
     end_position: EndPosition
     value: Union[CommandInstruction, MoveInstruction, MoveDirection]
+    capture_id: Optional[int]  # ONLY FOR CAPTURE IMAGE INSTRUCTION
 
     @classmethod
     @field_validator('value', mode='before')
