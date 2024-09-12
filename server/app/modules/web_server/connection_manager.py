@@ -123,12 +123,11 @@ class ConnectionManager(metaclass=Singleton):
 
         tasks = [asyncio.create_task(lambda: c.send_text(req)) for c in self.connections]
         
-        for t in tasks:
-            await t
+        await asyncio.gather(*tasks)
 
 
-    def slave_request_cv(self, image: str) -> Optional[ObstacleLabel]:
+    def slave_request_cv(self, image: str) -> None:
         self.logger.info("Sending CV request to slaves!")
-        return self._run_async(self._broadcast_cv_req(str(uuid4()), image))
+        self._run_async(self._broadcast_cv_req(str(uuid4()), image))
 
 
