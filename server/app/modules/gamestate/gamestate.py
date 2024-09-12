@@ -38,14 +38,14 @@ class GameState(metaclass=Singleton):
 
 
     """
-    Helper methods
+    CV methods
     """
 
     def capture_and_process_image(self) -> Optional[ObstacleLabel]:
         self.logger.info("Capturing image!")
         image_b64 = self.camera.capture()
         self.logger.info("Captured image as b64!")
-        self.connection_manager.slave_request_cv(image_b64)
+        self.connection_manager.slave_request_cv(image_b64, lambda x: print(x))
         return None
 
 

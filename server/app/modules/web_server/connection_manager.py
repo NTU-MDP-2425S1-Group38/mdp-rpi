@@ -22,6 +22,7 @@ class ConnectionManager(metaclass=Singleton):
     connections: List[WebSocket] = []
     observers: List[WebSocket] = []
     logger = logging.getLogger("Connection Manager")
+    pending_responses = {}
 
     async def connect(self, websocket: WebSocket) -> None:
         logging.getLogger().info("Adding websocket to all connections in ConnectionManager")
@@ -125,9 +126,21 @@ class ConnectionManager(metaclass=Singleton):
         
         await asyncio.gather(*tasks)
 
+    def handle_cv_response_callback(self, response:CvResponse) -> None:
+        if response.id in self.pending_responses.keys():
+            self.pending_responses[response.id](response)
+            self.pending_responses.pop(response.id, None)
 
-    def slave_request_cv(self, image: str) -> None:
+
+    def slave_request_cv(self, image: str, callback: any) -> None:
+        """
+        :param image: base64 string of image
+        :param callback: callback function that takes `CvResponse` as the only arg
+        :return: None
+        """
         self.logger.info("Sending CV request to slaves!")
-        self._run_async(self._broadcast_cv_req(str(uuid4()), image))
+        req_id = str(uuid4())
+        self.pending_responses[req_id] = callback
+        self._run_async(self._broadcast_cv_req(req_id, image))
 
 
