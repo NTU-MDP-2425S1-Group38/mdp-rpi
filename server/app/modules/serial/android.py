@@ -10,9 +10,11 @@ from typing import Optional
 import bluetooth
 
 from modules.gamestate.gamestate import GameState
+from modules.serial.stm32 import STM
 
 from utils.metaclass.singleton import Singleton
 from app_types.obstacle import Obstacle
+from app_types.primatives.position import Position
 
 from .link import Link
 
@@ -61,6 +63,7 @@ class AndroidMessage:
 
 class Android(metaclass=Singleton):
     gamestate: GameState
+    stm: STM
 
     def __init__(self):
         """
@@ -178,75 +181,83 @@ class Android(metaclass=Singleton):
             message_rcv = None
             try:
                 message_rcv = self.receive()
-                messages = message_rcv.split("\n")
-                for message_rcv in messages:
-                    if len(message_rcv) == 0:
-                        continue
-
-                    self.logger.info("Message received from Android: %s", message_rcv)
-                    if "BEGIN" in message_rcv:
-                        self.logger.info("BEGINNNN!")
-                        # TODO: Begin Task 1
-                        self.gamestate.set_obstacles(self.obstacle_dict)
-                        self.start()  # Calculate the path
-                    elif "CLEAR" in message_rcv:
-                        print(
-                            " --------------- CLEARING OBSTACLES LIST. ---------------- "
-                        )
-                        self.obstacle_dict.clear()
-                    elif "OBSTACLE" in message_rcv:
-                        print("OBSTACLE!!!!")
-                        x, y, dir, id = message_rcv.split(",")[1:]
-
-                        id = int(id)
-
-                        if dir == "-1":
-                            if id in self.obstacle_dict:
-                                del self.obstacle_dict[id]
-                                print("Deleted obstacle", id)
-                        elif dir not in ["N", "S", "E", "W"]:
-                            print("Invalid direction provided:", dir + ", ignoring...")
-                            continue
-                        else:
-                            newObstacle = [
-                                dir,
-                                (int(x), int(y)),
-                                (10, 10),
-                                id,
-                            ]
-                            self.obstacle_dict[id] = newObstacle
-
-                            print("Obstacle set successfully: ", newObstacle)
-                        print(
-                            f"--------------- Current list {len(self.obstacle_dict)}: -------------"
-                        )
-                        obs_items = self.obstacle_dict.items()
-                        if len(obs_items) == 0:
-                            print("! no obstacles.")
-                        else:
-                            for id, obstacle in obs_items:
-                                print(f"{id}: {obstacle}")
-
-                    elif "ROBOT" in message_rcv:
-                        print("NEW ROBOT LOCATION!!!")
-                        x, y, dir = message_rcv.split(",")[1:]
-                        x, y = int(x), int(y)
-
-                        if x < 0 or y < 0:
-                            print("Illegal robot coordinate, ignoring...")
-                            continue
-
-                        self.robot = self.get_api_object(
-                            PathfindingRequestRobot, dir, (int(x), int(y)), (21, 21)
-                        )
-                        print("Robot set successfully: ", self.robot)
-                    else:
-                        # Catch for messages with no keywords (OBSTACLE/ROBOT/BEGIN)
-                        print("Not a keyword, message received: ", message_rcv)
-
+                flag, drive_speed, angle, val = message_rcv.split(",")
+                self.stm.send_cmd(flag, drive_speed, angle, val)
             except OSError:
                 # self.android_dropped.set()
-                print("Event set: Bluetooth connection dropped")
+                self.logger.info("Event set: Bluetooth connection dropped")
 
-            if message_rcv is None:
-                continue
+        # Task 1
+        # while True:
+        #     message_rcv = None
+        #     try:
+        #         message_rcv = self.receive()
+        #         messages = message_rcv.split("\n")
+        #         for message_rcv in messages:
+        #             if len(message_rcv) == 0:
+        #                 continue
+
+        #             self.logger.info("Message received from Android: %s", message_rcv)
+        #             if "BEGIN" in message_rcv:
+        #                 self.logger.info("BEGINNNN!")
+        #                 # TODO: Begin Task 1
+        #                 obstacles = list(self.obstacle_dict.values())
+        #                 self.gamestate.set_obstacles(obstacles)
+        #             elif "CLEAR" in message_rcv:
+        #                 print(
+        #                     " --------------- CLEARING OBSTACLES LIST. ---------------- "
+        #                 )
+        #                 self.obstacle_dict.clear()
+        #             elif "OBSTACLE" in message_rcv:
+        #                 print("OBSTACLE!!!!")
+        #                 x, y, dir, id = message_rcv.split(",")[1:]
+
+        #                 id = int(id)
+
+        #                 if dir == "-1":
+        #                     if id in self.obstacle_dict:
+        #                         del self.obstacle_dict[id]
+        #                         print("Deleted obstacle", id)
+        #                 elif dir not in ["N", "S", "E", "W"]:
+        #                     print("Invalid direction provided:", dir + ", ignoring...")
+        #                     continue
+        #                 else:
+        #                     newObstacle = Obstacle(
+        #                         id=id,
+        #                         position=Position(int(x), int(y)),
+        #                         direction=dir,
+        #                     )
+        #                     self.obstacle_dict[id] = newObstacle
+
+        #                     print("Obstacle set successfully: ", newObstacle)
+        #                 print(
+        #                     f"--------------- Current list {len(self.obstacle_dict)}: -------------"
+        #                 )
+        #                 obs_items = self.obstacle_dict.items()
+        #                 if len(obs_items) == 0:
+        #                     print("! no obstacles.")
+        #                 else:
+        #                     for id, obstacle in obs_items:
+        #                         print(f"{id}: {obstacle}")
+
+        #             elif "ROBOT" in message_rcv:
+        #                 print("NEW ROBOT LOCATION!!!")
+        #                 x, y, dir = message_rcv.split(",")[1:]
+        #                 x, y = int(x), int(y)
+
+        #                 if x < 0 or y < 0:
+        #                     print("Illegal robot coordinate, ignoring...")
+        #                     continue
+
+        #                 self.robot = {"x": x, "y": y, "dir": dir}
+        #                 print("Robot set successfully: ", json.dumps(self.robot))
+        #             else:
+        #                 # Catch for messages with no keywords (OBSTACLE/ROBOT/BEGIN)
+        #                 print("Not a keyword, message received: ", message_rcv)
+
+        #     except OSError:
+        #         # self.android_dropped.set()
+        #         print("Event set: Bluetooth connection dropped")
+
+        #     if message_rcv is None:
+        #         continue

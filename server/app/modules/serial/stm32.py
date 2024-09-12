@@ -2,17 +2,21 @@ from utils.metaclass.singleton import Singleton
 from .configuration import BAUD_RATE, SERIAL_PORT
 from pathlib import Path
 from typing import Optional
+from modules.serial.android import Android
 
 import serial
 
 
 class STM(metaclass=Singleton):
+    android: Android
+
     def __init__(self):
         """
         Constructor for STMLink.
         """
         self.serial_link = None
         self.received = []
+        self.STM_Stopped = False
 
     def connect(self):
         """Connect to STM32 using serial UART connection, given the serial port and the baud rate"""
@@ -52,6 +56,12 @@ class STM(metaclass=Singleton):
             if self.serial_link.in_waiting > 0:
                 return str(self.serial.read_all(), "utf-8")
 
+    def set_stm_stop(self, val) -> None:
+        self.STM_Stopped = val
+
+    def get_stm_stop(self) -> bool:
+        return self.STM_Stopped
+
     def run(self):
         """Run the STM32 module."""
         self.connect()
@@ -63,12 +73,7 @@ class STM(metaclass=Singleton):
             try:
                 message_rcv = self.wait_receive()
                 print("Message received from STM: ", message_rcv)
-                if "fS" in message_rcv:
-                    self.set_stm_stop(
-                        True
-                    )  # Finished stopping, can start delay to recognise image
-                    print("Setting STM Stopped to true")
-                elif message_rcv[0] == "f":
+                if message_rcv[0] == "f":
                     # Finished command, send to android
                     message_split = message_rcv[1:].split(
                         "|"
@@ -78,9 +83,6 @@ class STM(metaclass=Singleton):
                     distance = message_split[2].strip()
 
                     cmd = cmd_speed[0]  # Command (t/T)
-                    speed = cmd_speed[1:]
-
-                    send_count = 1
 
                     if turning_degree == f"-{self.drive_angle}":
                         # Turn left

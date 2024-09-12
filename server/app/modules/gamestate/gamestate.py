@@ -1,6 +1,8 @@
 import logging
 from collections.abc import Callable
 from typing import Literal, List, Optional
+import time
+
 
 from app_types.obstacle import Obstacle
 from app_types.primatives.command import CommandInstruction, MoveInstruction, AlgoCommandResponse
@@ -20,13 +22,12 @@ class GameState(metaclass=Singleton):
 
     logger = logging.getLogger("GameState")
 
-    camera:Camera
-    connection_manager:ConnectionManager
-    stm:STM
+    camera: Camera
+    connection_manager: ConnectionManager
+    stm: STM
 
     obstacles: List[Obstacle] = []
     instruction: Instructions = Instructions()
-
 
     def __init__(self):
         self.logger.info("Initialising camera")
@@ -37,7 +38,6 @@ class GameState(metaclass=Singleton):
 
         # self.logger.info("Initialising STM connector")
         # self.stm = STM()
-
 
     """
     CV methods
@@ -69,7 +69,6 @@ class GameState(metaclass=Singleton):
 
     def capture_and_update_label(self, obstacle_id: int) -> None:
         self.capture_and_process_image(lambda res: self._update_obstacle_label_after_cv(obstacle_id, res))
-
 
     """
     Algo methods
@@ -106,17 +105,48 @@ class GameState(metaclass=Singleton):
         """
         self.logger.info("Starting task one running loop!")
         while cmd := self.instruction.pop():
-
             self.logger.info(f"Current command: {cmd.model_dump()}")
 
-            if isinstance(cmd.value, CommandInstruction):
-                pass
+            if hasattr(cmd.value, "move"):
+                move_direction = cmd.value.move
+                angle = 0
+                val = cmd.value.amount
 
-            if isinstance(cmd.value, MoveInstruction):
-                pass
+                if move_direction == "FORWARD":
+                    flag = "T"
+                elif move_direction == "BACKWARD":
+                    flag = "t"
+            else:
+                if cmd.value == "CAPTURE_IMAGE":
+                    flag = "S"
+                    time.sleep(1)
+                    self.logger.info("Capturing image!")
+
+                else:
+                    val = 90
+                    if cmd.value == "FORWARD_LEFT":
+                        flag = "T"
+                        angle = -self.drive_angle
+                    elif cmd.value == "FORWARD_RIGHT":
+                        flag = "T"
+                        angle = self.drive_angle
+                    elif cmd.value == "BACKWARD_LEFT":
+                        flag = "t"
+                        angle = -self.drive_angle
+
+            self.stm.send_cmd(flag, self.drive_speed, angle, val)
+
+            # if isinstance(cmd.value, CommandInstruction):
+            #     pass
+
+            # if isinstance(cmd.value, MoveInstruction):
+
+            #     pass
+
+            # if isinstance(cmd.value, TurnInstruction):
+            #     pass
 
         self.logger.info("Run Task One completed!")
-
 
     """
     Main entry methods
@@ -128,9 +158,5 @@ class GameState(metaclass=Singleton):
         :param task: Literal[1, 2] corresponding to which task
         :return: None
         """
-        if task==1:
+        if task == 1:
             self._run_task_one()
-
-
-
-
