@@ -62,9 +62,6 @@ class AndroidMessage:
 
 
 class Android(metaclass=Singleton):
-    gamestate: GameState
-    stm: STM
-
     def __init__(self):
         """
         Initialize the Bluetooth connection.
@@ -78,6 +75,8 @@ class Android(metaclass=Singleton):
         self.server_socket = None
         self.logger = logging.getLogger()
         self.obstacle_dict: dict[str, Obstacle] = {}
+        self.gamestate = GameState()
+        self.stm = STM()
 
     def connect(self):
         """
