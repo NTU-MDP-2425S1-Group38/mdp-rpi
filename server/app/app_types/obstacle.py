@@ -15,7 +15,7 @@ class Obstacle(BaseModel):
     @model_serializer()
     def _serial(self):
         return {
-            "id": self.id,
+            "id": 1000 * self.position.x + 100 * self.position.y + self.direction,
             "x": self.position.x,
             "y": self.position.y,
             "d": self.direction,
