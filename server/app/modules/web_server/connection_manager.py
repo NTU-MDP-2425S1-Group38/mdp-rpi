@@ -45,24 +45,11 @@ class ConnectionManager(metaclass=Singleton):
 
     def _run_async(self, coro: Coroutine):
         self.logger.info("Attempting to run async coroutine")
-        try:
-            loop = asyncio.get_running_loop()
-            self.logger.info("Event loop is running, creating task")
-        except RuntimeError:
-            self.logger.warning("No running loop, setting up a new temporary loop")
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(coro)
-            loop.close()
-            return result
-
-        # If the loop is running, we schedule the coroutine as a task and wait for its result safely.
+        loop = asyncio.get_event_loop()
         if loop.is_running():
-            task = asyncio.create_task(coro)
-            return asyncio.run_coroutine_threadsafe(task, loop).result()
+            return asyncio.create_task(coro)
         else:
             return loop.run_until_complete(coro)
-
 
     """
     ALGO RELATED STUFF
@@ -120,7 +107,7 @@ class ConnectionManager(metaclass=Singleton):
     CV RELATED STUFF
     """
 
-    async def _broadcast_cv_req(self, req_id: str, image: str) -> Optional[ObstacleLabel]:
+    async def _broadcast_cv_req(self, req_id: str, image: str) -> None:
         self.logger.info("Entering _broadcast_cv_req")
 
         if not self.connections:
