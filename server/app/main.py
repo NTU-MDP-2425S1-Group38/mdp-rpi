@@ -41,8 +41,8 @@ def run_bluetooth_server() -> None:
 def run_stm():
     load_dotenv()
     init_logger()
-    # stm = STM()
-    # stm.connect()
+    stm = STM()
+    stm.connect()
 
 
 
