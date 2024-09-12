@@ -25,7 +25,7 @@ async def capture():
     """
     logger.info("Received capture command")
     state = GameState().capture_and_process_image()
-    return state
+    return "State"
     # cam = Camera()
     # img = cam.capture()
     # return img

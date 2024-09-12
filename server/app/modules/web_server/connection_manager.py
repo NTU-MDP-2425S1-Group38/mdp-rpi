@@ -22,6 +22,7 @@ class ConnectionManager(metaclass=Singleton):
     connections: List[WebSocket] = []
     observers: List[WebSocket] = []
     logger = logging.getLogger("Connection Manager")
+    pending_responses = {}
 
     async def connect(self, websocket: WebSocket) -> None:
         logging.getLogger().info("Adding websocket to all connections in ConnectionManager")
@@ -45,21 +46,9 @@ class ConnectionManager(metaclass=Singleton):
 
     def _run_async(self, coro: Coroutine):
         self.logger.info("Attempting to run async coroutine")
-        try:
-            loop = asyncio.get_running_loop()
-            self.logger.info("Event loop is running, creating task")
-        except RuntimeError:
-            self.logger.warning("No running loop, setting up a new temporary loop")
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(coro)
-            loop.close()
-            return result
-
-        # If the loop is running, we schedule the coroutine as a task and wait for its result safely.
+        loop = asyncio.get_event_loop()
         if loop.is_running():
-            task = asyncio.create_task(coro)
-            return asyncio.run_coroutine_threadsafe(task, loop).result()
+            return asyncio.create_task(coro)
         else:
             return loop.run_until_complete(coro)
 
@@ -120,7 +109,7 @@ class ConnectionManager(metaclass=Singleton):
     CV RELATED STUFF
     """
 
-    async def _broadcast_cv_req(self, req_id: str, image: str) -> Optional[ObstacleLabel]:
+    async def _broadcast_cv_req(self, req_id: str, image: str) -> None:
         self.logger.info("Entering _broadcast_cv_req")
 
         if not self.connections:
@@ -133,68 +122,25 @@ class ConnectionManager(metaclass=Singleton):
             payload=SlaveWorkRequestPayloadImageRecognition(image=image)
         ).model_dump_json()
 
-        self.logger.info("Created request object!")
+        tasks = [asyncio.create_task(c.send_text(req)) for c in self.connections]
+        
+        await asyncio.gather(*tasks)
 
-        async def send_and_receive(websocket: WebSocket) -> Optional[CvResponse]:
-            await websocket.send_text(req)
-            self.logger.info("Sending request to slave!")
-            response = await websocket.receive_json()
-            try:
-                parsed = CvResponse(**response)
-                if parsed.id != req_id:
-                    self.logger.warning("Race condition! Received a mismatched ID from request!")
-                    return None
-                return parsed
-            except ValidationError:
-                self.logger.error("Unable to parse CvResponse!")
-                return None
+    def handle_cv_response_callback(self, response:CvResponse) -> None:
+        if response.id in self.pending_responses.keys():
+            self.pending_responses[response.id](response)
+            self.pending_responses.pop(response.id, None)
 
-        # Create tasks from the coroutine for each connection
-        tasks = [asyncio.create_task(send_and_receive(conn)) for conn in self.connections]
 
-        try:
-            # Await for the first non-null response
-            while tasks:
-                done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-
-                for task in done:
-                    try:
-                        result = await task
-                        if result:  # Check if the result is non-null
-                            # Cancel any remaining tasks since we have a valid result
-                            for pending_task in pending:
-                                pending_task.cancel()
-                            return result
-                    except Exception as e:
-                        self.logger.error(f"Error processing response: {str(e)}")
-
-                # If no valid result, keep waiting for other tasks
-                tasks = list(pending)
-
-        except Exception as e:
-            self.logger.error(f"Error during waiting for tasks: {str(e)}")
-            for task in tasks:
-                task.cancel()
-
-        return None  # Return None if no valid responses are obtained
-
-        # Await for the first non-null response
-        while tasks:
-            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-
-            for task in done:
-                result = await task
-                if result:  # Check if the result is non-null
-                    # Cancel any remaining tasks since we have a valid result
-                    for pending_task in pending:
-                        pending_task.cancel()
-                    return result
-
-            # If no valid result, keep waiting for other tasks
-            tasks = list(pending)
-
-    def slave_request_cv(self, image: str) -> Optional[ObstacleLabel]:
+    def slave_request_cv(self, image: str, callback: any) -> None:
+        """
+        :param image: base64 string of image
+        :param callback: callback function that takes `CvResponse` as the only arg
+        :return: None
+        """
         self.logger.info("Sending CV request to slaves!")
-        return self._run_async(self._broadcast_cv_req(str(uuid4()), image))
+        req_id = str(uuid4())
+        self.pending_responses[req_id] = callback
+        self._run_async(self._broadcast_cv_req(req_id, image))
 
 
