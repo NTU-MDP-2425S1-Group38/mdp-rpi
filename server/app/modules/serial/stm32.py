@@ -2,13 +2,13 @@ from utils.metaclass.singleton import Singleton
 from .configuration import BAUD_RATE, SERIAL_PORT
 from pathlib import Path
 from typing import Optional
-from modules.serial.android import Android
+# from modules.serial.android import Android
 
 import serial
 
 
 class STM(metaclass=Singleton):
-    android: Android
+    # android: Android
 
     def __init__(self):
         """
