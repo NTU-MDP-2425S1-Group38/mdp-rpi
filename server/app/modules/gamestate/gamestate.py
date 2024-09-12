@@ -45,9 +45,8 @@ class GameState(metaclass=Singleton):
         self.logger.info("Capturing image!")
         image_b64 = self.camera.capture()
         self.logger.info("Captured image as b64!")
-        label = self.connection_manager.slave_request_cv(image_b64)
-        self.logger.info(f"Image labeled as: {label}")
-        return label
+        self.connection_manager.slave_request_cv(image_b64)
+        return None
 
 
     """

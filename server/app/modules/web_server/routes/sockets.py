@@ -19,7 +19,7 @@ async def connect(websocket: WebSocket):
     logging.getLogger().info("New WS connection")
     await websocket.accept()
     await ConnectionManager().connect(websocket)
-    # await connection_handler(websocket)
+    await connection_handler(websocket)
 
 
 @socket_endpoints.websocket("/observe")
