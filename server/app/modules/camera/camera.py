@@ -30,6 +30,15 @@ class Camera(metaclass=Singleton):
         # self.cam.start()
         self.logger.info("Camera has been configured!")
 
+    def __del__(self):
+        try:
+            self.logger.info("Attempting to close camera()")
+            self.cam.stop()
+        except Exception:
+            self.logger.info("Unable to stop camera, is it running?")
+
+
+
 
     def capture(self) -> str:
         """
