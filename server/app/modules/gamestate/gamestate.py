@@ -6,6 +6,7 @@ import math
 
 
 from app_types.obstacle import Obstacle
+
 from app_types.primatives.command import (
     CommandInstruction,
     MoveInstruction,
@@ -14,6 +15,8 @@ from app_types.primatives.command import (
 )
 from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
+from app_types.primatives.obstacle_direction import ObstacleDirection
+from app_types.primatives.position import Position
 from utils.instructions import Instructions
 from modules.camera.camera import Camera
 
@@ -129,131 +132,36 @@ class GameState(metaclass=Singleton):
         Obstacles need to be set and instructions need to be added prior to running.
         :return: None
         """
-        self.logger.info("Starting task one running loop!")
-        obstacleArr = []
-        for dir_str in ["SOUTH", "EAST", "NORTH", "WEST"]:
-            direction_one = Direction(dir_str)
-            image_id_1 = 1
-            south_west = PathfindingPoint(x=20, y=20)
-            north_east = PathfindingPoint(x=21, y=21)
-            pathObstacle = PathfindingRequestObstacle(
-                direction=direction_one,
-                image_id=image_id_1,
-                north_east=north_east,
-                south_west=south_west,
-            )
-            obstacleArr.append(pathObstacle)
+        self.logger.info("Starting task A5")
+        image_id = None
+        stm = self.stm
 
-        robot_direction = Direction("NORTH")
-        robot_south_west = PathfindingPoint(x=20, y=0)
-        robot_north_east = PathfindingPoint(x=24, y=4)
-        # Replace with current_robot_position when ready
-        pathRobot = PathfindingRequestRobot(
-            direction=robot_direction,
-            north_east=robot_north_east,
-            south_west=robot_south_west,
-        )
+        while True:
+            # South to East to North to West
 
-        pathfindingRequest = PathfindingRequest(obstacles=obstacleArr, robot=pathRobot)
-        pathfinding_api = PathfindingApi(api_client=self.client)
+            # Move forward to South
+            stm.send_cmd("T", 55, 90, 20)
 
-        response = pathfinding_api.pathfinding_post(pathfindingRequest)
-        segments = response.segments
-        i = 1
-        counter = 0
-
-        for i, segment in enumerate(segments):
-            print(f"On segment {i+1} of {len(segments)}:")
-            self.set_stm_stop(False)  # Reset to false upon starting the new segment
-
-            # ~ print("PATH ", i, ": ", segment.path.actual_instance[0])
-            print("PATH ", i, ": ", segment.path.actual_instance)
-            print("Segment ", i, ": ", segment.instructions)
-            # ~ print(segment.instructions[0])
-            print("SEGMENT NUMBER ", i)
-            i = i + 1
-
-            for instruction in segment.instructions:
-                actual_instance = instruction.actual_instance
-                inst = ""
-                flag = ""
-                angle = 0
-                val = 0
-
-                if hasattr(actual_instance, "move"):
-                    # If have move attribute, it is a PathfindingResponseMoveInstruction
-                    inst = PathfindingResponseMoveInstruction(
-                        amount=actual_instance.amount, move=actual_instance.move
-                    )
-                    move_direction = inst.move.value
-                    angle = 0
-                    val = inst.amount
-                    # ~ print("IS MOVE: ", inst)
-                    print("AMOUNT TO MOVE: ", val)
-                    print("MOVE DIRECTION: ", move_direction)
-                    # Send instructions to stm
-                    if move_direction == "FORWARD":
-                        flag = "T"
-                    elif move_direction == "BACKWARD":
-                        flag = "t"
-
-                else:
-                    try:
-                        inst = TurnInstruction(actual_instance)
-                    except:
-                        inst = MiscInstruction(actual_instance)
-
-                    print("Final Instruction ", inst)
-                    if (
-                        isinstance(inst, MiscInstruction)
-                        and str(inst.value) == "CAPTURE_IMAGE"
-                    ):
-                        flag = "S"
-
-                    elif isinstance(inst, TurnInstruction):
-                        val = 90
-                        # TODO: Send instruction to the STM to turn
-                        inst_send = inst.value
-                        if inst.value == "FORWARD_LEFT":
-                            flag = "T"
-                            angle = "-25"
-                        elif inst.value == "FORWARD_RIGHT":
-                            flag = "T"
-                            angle = "25"
-                        elif inst.value == "BACKWARD_LEFT":
-                            flag = "t"
-                            angle = "-25"
-                        else:
-                            # BACKWARD_RIGHT
-                            flag = "t"
-                            angle = "25"
-
-                self.stm.send_cmd(flag, 60, angle, val)
-                time.sleep(0.2)
-
-            while not self.get_stm_stop():
-                # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
-                pass
-
-            print("STM stopped, recognising image...")
-            # STM has stopped, recognise image - x seconds to recognise
-            time.sleep(2)
-            print("Image recognition delay done.")
-            last_image = self.get_last_image()
-            print("Last image:", last_image)
-            if last_image == "marker":
-                msg_str = f"TARGET,{last_image},{last_image}"
-                self.android.send(msg_str)
-                print("Going next, it's MARKER")
-                continue  # Perform next segment
-            elif last_image == "NONE":
-                print("Last image is NONE")
-                continue
-            else:
-                msg_str = f"TARGET,{segment.image_id},{last_image}"
-                self.android.send(msg_str)
-
+            self.capture_and_process_image(1)
+            if image_id != "bullseye":
                 break
+            # Move to East
+
+            self.capture_and_process_image(1)
+            if image_id != "bullseye":
+                break
+            # Move to North
+
+            self.capture_and_process_image(1)
+            if image_id != "bullseye":
+                break
+
+            # Move to West
+            self.capture_and_process_image(1)
+            if image_id != "bullseye":
+                break
+
+        self.logger("Task a5 completed!")
 
     """
     Methods related to task 1.
