@@ -31,7 +31,7 @@ class GameState(metaclass=Singleton):
 
     def __init__(self):
         self.logger.info("Initialising camera")
-        self.camera = Camera()
+        # self.camera = Camera()
 
         self.logger.info("Initialising connection manager")
         self.connection_manager = ConnectionManager()
@@ -45,7 +45,7 @@ class GameState(metaclass=Singleton):
 
     def capture_and_process_image(self, callback: Callable[[CvResponse], None] = lambda x: print(x)) -> None:
         self.logger.info("Capturing image!")
-        image_b64 = self.camera.capture()
+        image_b64 = Camera().capture()
         self.logger.info("Captured image as b64!")
         self.connection_manager.slave_request_cv(image_b64, callback)
         return
