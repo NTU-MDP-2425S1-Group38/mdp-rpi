@@ -37,29 +37,29 @@ class Camera(metaclass=Singleton):
         :return: Base64 image
         """
 
-        with self.lock:
+        # with self.lock:
 
-            self.logger.info("Starting camera!")
+        self.logger.info("Starting camera!")
 
-            self.cam.start()  # this is the crux, picam2 doesn't throw errors if it is not start()'ed
+        self.cam.start()  # this is the crux, picam2 doesn't throw errors if it is not start()'ed
 
-            self.logger.info("Capturing image!")
+        self.logger.info("Capturing image!")
 
-            # Create a BytesIO object to store the image in memory
-            image_stream = io.BytesIO()
+        # Create a BytesIO object to store the image in memory
+        image_stream = io.BytesIO()
 
-            self.logger.info("Created bytes array")
+        self.logger.info("Created bytes array")
 
-            # Capture the image in JPEG format
-            img = self.cam.capture_array()
-            self.logger.info(f"Image! {img}")
-            self.logger.info("Image has been captured as np.Array!")
-            self.cam.stop()
+        # Capture the image in JPEG format
+        img = self.cam.capture_array()
+        self.logger.info(f"Image! {img}")
+        self.logger.info("Image has been captured as np.Array!")
+        self.cam.stop()
 
-            pil_img = Image.fromarray(img)
-            pil_img.save(image_stream, format="JPEG", quality=70)
+        pil_img = Image.fromarray(img)
+        pil_img.save(image_stream, format="JPEG", quality=70)
 
-            return base64.b64encode(image_stream.getvalue()).decode("utf-8")
+        return base64.b64encode(image_stream.getvalue()).decode("utf-8")
 
 
 
