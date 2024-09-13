@@ -27,7 +27,7 @@ class Camera(metaclass=Singleton):
 
         # Configure and start the camera
         self.cam.configure(config)
-        self.cam.start()
+        # self.cam.start()
         self.logger.info("Camera has started!")
 
 
