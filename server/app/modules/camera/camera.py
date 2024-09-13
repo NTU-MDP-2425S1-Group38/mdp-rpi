@@ -28,7 +28,7 @@ class Camera(metaclass=Singleton):
         # Configure and start the camera
         self.cam.configure(config)
         # self.cam.start()
-        self.logger.info("Camera has started!")
+        self.logger.info("Camera has been configured!")
 
 
     def capture(self) -> str:
@@ -38,6 +38,8 @@ class Camera(metaclass=Singleton):
         """
 
         with self.lock:
+
+            self.logger.info("Starting camera!")
 
             self.cam.start()  # this is the crux, picam2 doesn't throw errors if it is not start()'ed
 
