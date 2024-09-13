@@ -180,8 +180,21 @@ class Android(metaclass=Singleton):
             message_rcv = None
             try:
                 message_rcv = self.receive()
-                flag, drive_speed, angle, val = message_rcv.split(",")
-                self.stm.send_cmd(flag, int(drive_speed), int(angle), int(val))
+                if message_rcv == "f":
+                    self.stm.send_cmd("T", 55, 0, 10)
+                elif message_rcv == "fl":
+                    self.stm.send_cmd("T", 55, -25, 90)
+                elif message_rcv == "fr":
+                    self.stm.send_cmd("T", 55, 25, 90)
+                elif message_rcv == "b":
+                    self.stm.send_cmd("t", 55, 0, 10)
+                elif message_rcv == "bl":
+                    self.stm.send_cmd("t", 55, -25, 90)
+                elif message_rcv == "bl":
+                    self.stm.send_cmd("t", 55, 25, 90)
+
+                # flag, drive_speed, angle, val = message_rcv.split(",")
+                # self.stm.send_cmd(flag, int(drive_speed), int(angle), int(val))
             except OSError:
                 # self.android_dropped.set()
                 self.logger.info("Event set: Bluetooth connection dropped")
