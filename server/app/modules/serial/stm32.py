@@ -2,6 +2,8 @@ from utils.metaclass.singleton import Singleton
 from .configuration import BAUD_RATE, SERIAL_PORT
 from pathlib import Path
 from typing import Optional
+from modules.gamestate.gamestate import GameState
+
 # from modules.serial.android import Android
 
 import serial
@@ -16,7 +18,7 @@ class STM(metaclass=Singleton):
         """
         self.serial_link = None
         self.received = []
-        self.STM_Stopped = False
+        self.gamestate = GameState()
 
     def connect(self):
         """Connect to STM32 using serial UART connection, given the serial port and the baud rate"""
@@ -56,13 +58,79 @@ class STM(metaclass=Singleton):
             if self.serial_link.in_waiting > 0:
                 return str(self.serial.read_all(), "utf-8")
 
-    def set_stm_stop(self, val) -> None:
-        self.STM_Stopped = val
+    def run_task_1(self):
+        """Run the STM32 module."""
+        self.connect()
+        msg = ""
 
-    def get_stm_stop(self) -> bool:
-        return self.STM_Stopped
+        while True:
+            message_rcv = None
+            try:
+                message_rcv = self.wait_receive()
+                self.gamestate
+                print("Message received from STM: ", message_rcv)
+                if "fS" in message_rcv:
+                    self.gamestate.set_stm_stop(
+                        True
+                    )  # Finished stopping, can start delay to recognise image
+                    print("Setting STM Stopped to true")
+                if message_rcv[0] == "f":
+                    # Finished command, send to android
+                    message_split = message_rcv[1:].split(
+                        "|"
+                    )  # Ignore the 'f' at the start
+                    cmd_speed = message_split[0]
+                    turning_degree = message_split[1]
+                    distance = message_split[2].strip()
 
-    def run(self):
+                    cmd = cmd_speed[0]  # Command (t/T)
+
+                    if turning_degree == f"-{self.drive_angle}":
+                        # Turn left
+                        if cmd == "t":
+                            # Backward left
+                            msg = "TURN,BACKWARD_LEFT,0"
+                        elif cmd == "T":
+                            # Forward left
+                            msg = "TURN,FORWARD_LEFT,0"
+                    elif turning_degree == f"{self.drive_angle}":
+                        # Turn right
+                        if cmd == "t":
+                            # Backward right
+                            msg = "TURN,BACKWARD_RIGHT,0"
+                        elif cmd == "T":
+                            # Forward right
+                            msg = "TURN,FORWARD_RIGHT,0"
+                    elif turning_degree == "0":
+                        if cmd == "t":
+                            # Backward
+                            msg = "MOVE,BACKWARD," + distance
+                        elif cmd == "T":
+                            # Forward
+                            msg = "MOVE,FORWARD," + distance
+                    else:
+                        # Unknown turning degree
+                        print("Unknown turning degree")
+                        msg = "No instruction"
+                        continue
+
+                    print("Msg: ", msg)
+                    try:
+                        self.android.send(msg)
+                        print("SENT TO ANDROID SUCCESSFULLY: ", msg)
+                    except OSError:
+                        self.android_dropped.set()
+                        print("Event set: Android dropped")
+
+                    self.android_dropped.clear()  # Clear previously set event
+
+            except OSError as e:
+                print(f"Error in receiving STM data: {e}")
+
+            if message_rcv is None:
+                continue
+
+    def run_task_2(self):
         """Run the STM32 module."""
         self.connect()
         msg = ""
