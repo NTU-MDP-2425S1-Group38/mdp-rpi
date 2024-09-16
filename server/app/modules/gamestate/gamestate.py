@@ -54,7 +54,7 @@ class GameState(metaclass=Singleton):
         self.STM_Stopped = False
 
         self.start_time = 0
-        self.drive_speed = 55
+        self.drive_speed = 40 if self.is_outdoors else 55
         self.drive_angle = 25
 
         # Variables Related to Task 2
@@ -191,22 +191,33 @@ class GameState(metaclass=Singleton):
 
             # Move forward to South
             stm.send_cmd("T", 55, 90, 20)
-
             self.capture_and_process_image(1)
             if image_id != "bullseye":
                 break
+
             # Move to East
-
+            # Backward (90-100cm)
+            stm.send_cmd("T", 55, 25, 90)
+            stm.send_cmd("T", 55, -25, 90)
+            stm.send_cmd("T", 55, -25, 90)
             self.capture_and_process_image(1)
             if image_id != "bullseye":
                 break
-            # Move to North
 
+            # Move to North
+            # Backward (90-100cm)
+            stm.send_cmd("T", 55, 25, 90)
+            stm.send_cmd("T", 55, -25, 90)
+            stm.send_cmd("T", 55, -25, 90)
             self.capture_and_process_image(1)
             if image_id != "bullseye":
                 break
 
             # Move to West
+            # Backward (90-100cm)
+            stm.send_cmd("T", 55, 25, 90)
+            stm.send_cmd("T", 55, -25, 90)
+            stm.send_cmd("T", 55, -25, 90)
             self.capture_and_process_image(1)
             if image_id != "bullseye":
                 break
