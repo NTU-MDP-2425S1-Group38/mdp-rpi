@@ -52,8 +52,8 @@ For Ruben:
 
 ```bash
 ssh user@192.168.100.100 #Enter password
-sudo chmod 777 /dev/ttyUSB0
+sudo bash #Enter password
 cd mdp-rpi
 cd server
-./server_entry.sh
+bash ./server_entry.sh
 ```

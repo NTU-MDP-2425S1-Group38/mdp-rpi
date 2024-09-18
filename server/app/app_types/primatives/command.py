@@ -5,26 +5,40 @@ from pydantic import BaseModel, Field, field_validator, ValidationError
 
 
 class Direction(int, Enum):
-    North = 1,
-    South = 2,
-    East = 3,
+    North = 1
+    South = 2
+    East = 3
     West = 4
 
 
 # Enum for movement directions
 class MoveDirection(str, Enum):
     Forward = "FORWARD"
-    ForwardRight = "FORWARD_RIGHT"
-    ForwardLeft = "FORWARD_LEFT"
+    # ForwardRight = "FORWARD_RIGHT"
+    # ForwardLeft = "FORWARD_LEFT"
     Backward = "BACKWARD"
-    BackwardRight = "BACKWARD_RIGHT"
-    BackwardLeft = "BACKWARD_LEFT"
+    # BackwardRight = "BACKWARD_RIGHT"
+    # BackwardLeft = "BACKWARD_LEFT"
 
 
 # Model for move instructions with an amount (for moves like FORWARD, BACKWARD)
 class MoveInstruction(BaseModel):
     move: MoveDirection
     amount: float = Field(default=0.0)
+
+
+class TurnInstruction(str, Enum):
+    """
+    TurnInstruction
+    """
+
+    """
+    allowed enum values
+    """
+    FORWARD_LEFT = "FORWARD_LEFT"
+    FORWARD_RIGHT = "FORWARD_RIGHT"
+    BACKWARD_LEFT = "BACKWARD_LEFT"
+    BACKWARD_RIGHT = "BACKWARD_RIGHT"
 
 
 class CommandInstruction(str, Enum):
@@ -39,18 +53,20 @@ class EndPosition(BaseModel):
 
 
 class Command(BaseModel):
-    cat:str = Field(default="control")
+    cat: str = Field(default="control")
     end_position: EndPosition
     value: Union[CommandInstruction, MoveInstruction, MoveDirection]
     capture_id: Optional[int]  # ONLY FOR CAPTURE IMAGE INSTRUCTION
 
     @classmethod
-    @field_validator('value', mode='before')
+    @field_validator("value", mode="before")
     def validate_value(cls, v):
         if isinstance(v, str):
             # Ensure it's a valid CommandInstruction
             if v in CommandInstruction.__members__.values():
                 return CommandInstruction(v)
+            elif v in TurnInstruction.__members__.values():
+                return TurnInstruction(v)
             else:
                 raise ValueError(f"Invalid command instruction: {v}")
         elif isinstance(v, dict):
@@ -60,8 +76,6 @@ class Command(BaseModel):
             raise ValueError(f"Invalid value type: {type(v)}")
 
 
-
-
 class AlgoCommandResponse(BaseModel):
-    id:str
+    id: str
     commands: List[Command]

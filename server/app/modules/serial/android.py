@@ -180,83 +180,134 @@ class Android(metaclass=Singleton):
             message_rcv = None
             try:
                 message_rcv = self.receive()
-                flag, drive_speed, angle, val = message_rcv.split(",")
-                self.stm.send_cmd(flag, int(drive_speed), int(angle), int(val))
+                if message_rcv == "f":
+                    self.stm.send_cmd("T", 55, 0, 10)
+                elif message_rcv == "fl":
+                    self.stm.send_cmd("T", 55, -25, 90)
+                elif message_rcv == "fr":
+                    self.stm.send_cmd("T", 55, 25, 90)
+                elif message_rcv == "b":
+                    self.stm.send_cmd("t", 55, 0, 10)
+                elif message_rcv == "bl":
+                    self.stm.send_cmd("t", 55, -25, 90)
+                elif message_rcv == "bl":
+                    self.stm.send_cmd("t", 55, 25, 90)
+
+                # flag, drive_speed, angle, val = message_rcv.split(",")
+                # self.stm.send_cmd(flag, int(drive_speed), int(angle), int(val))
             except OSError:
                 # self.android_dropped.set()
                 self.logger.info("Event set: Bluetooth connection dropped")
 
+    def run_task_1(self) -> None:
+        """
+        Main running function in a while loop
+        :return:
+        """
+        self.connect()
+        self.logger.info("Went into android receive function")
+
         # Task 1
-        # while True:
-        #     message_rcv = None
-        #     try:
-        #         message_rcv = self.receive()
-        #         messages = message_rcv.split("\n")
-        #         for message_rcv in messages:
-        #             if len(message_rcv) == 0:
-        #                 continue
+        while True:
+            message_rcv = None
+            try:
+                message_rcv = self.receive()
+                messages = message_rcv.split("\n")
+                for message_rcv in messages:
+                    if len(message_rcv) == 0:
+                        continue
 
-        #             self.logger.info("Message received from Android: %s", message_rcv)
-        #             if "BEGIN" in message_rcv:
-        #                 self.logger.info("BEGINNNN!")
-        #                 # TODO: Begin Task 1
-        #                 obstacles = list(self.obstacle_dict.values())
-        #                 self.gamestate.set_obstacles(obstacles)
-        #             elif "CLEAR" in message_rcv:
-        #                 print(
-        #                     " --------------- CLEARING OBSTACLES LIST. ---------------- "
-        #                 )
-        #                 self.obstacle_dict.clear()
-        #             elif "OBSTACLE" in message_rcv:
-        #                 print("OBSTACLE!!!!")
-        #                 x, y, dir, id = message_rcv.split(",")[1:]
+                    self.logger.info("Message received from Android: %s", message_rcv)
+                    if "BEGIN" in message_rcv:
+                        self.logger.info("BEGINNNN!")
+                        obstacles = list(self.obstacle_dict.values())
+                        self.gamestate.set_obstacles(obstacles)
+                    elif "CLEAR" in message_rcv:
+                        self.logger.info(
+                            " --------------- CLEARING OBSTACLES LIST. ---------------- "
+                        )
+                        self.obstacle_dict.clear()
+                    elif "OBSTACLE" in message_rcv:
+                        self.logger.info("OBSTACLE!!!!")
+                        x, y, dir, id = message_rcv.split(",")[1:]
 
-        #                 id = int(id)
+                        id = int(id)
 
-        #                 if dir == "-1":
-        #                     if id in self.obstacle_dict:
-        #                         del self.obstacle_dict[id]
-        #                         print("Deleted obstacle", id)
-        #                 elif dir not in ["N", "S", "E", "W"]:
-        #                     print("Invalid direction provided:", dir + ", ignoring...")
-        #                     continue
-        #                 else:
-        #                     newObstacle = Obstacle(
-        #                         id=id,
-        #                         position=Position(int(x), int(y)),
-        #                         direction=dir,
-        #                     )
-        #                     self.obstacle_dict[id] = newObstacle
+                        if dir == "-1":
+                            if id in self.obstacle_dict:
+                                del self.obstacle_dict[id]
+                                self.logger.info("Deleted obstacle", id)
+                        elif dir not in ["N", "S", "E", "W"]:
+                            self.logger.info(
+                                "Invalid direction provided:", dir + ", ignoring..."
+                            )
+                            continue
+                        else:
+                            newObstacle = Obstacle(
+                                id=id,
+                                position=Position(int(x), int(y)),
+                                direction=dir,
+                            )
+                            self.obstacle_dict[id] = newObstacle
 
-        #                     print("Obstacle set successfully: ", newObstacle)
-        #                 print(
-        #                     f"--------------- Current list {len(self.obstacle_dict)}: -------------"
-        #                 )
-        #                 obs_items = self.obstacle_dict.items()
-        #                 if len(obs_items) == 0:
-        #                     print("! no obstacles.")
-        #                 else:
-        #                     for id, obstacle in obs_items:
-        #                         print(f"{id}: {obstacle}")
+                            self.logger.info("Obstacle set successfully: ", newObstacle)
+                        self.logger.info(
+                            f"--------------- Current list {len(self.obstacle_dict)}: -------------"
+                        )
+                        obs_items = self.obstacle_dict.items()
+                        if len(obs_items) == 0:
+                            self.logger.info("! no obstacles.")
+                        else:
+                            for id, obstacle in obs_items:
+                                self.logger.info(f"{id}: {obstacle}")
 
-        #             elif "ROBOT" in message_rcv:
-        #                 print("NEW ROBOT LOCATION!!!")
-        #                 x, y, dir = message_rcv.split(",")[1:]
-        #                 x, y = int(x), int(y)
+                    elif "ROBOT" in message_rcv:
+                        self.logger.info("NEW ROBOT LOCATION!!!")
+                        x, y, dir = message_rcv.split(",")[1:]
+                        x, y = int(x), int(y)
 
-        #                 if x < 0 or y < 0:
-        #                     print("Illegal robot coordinate, ignoring...")
-        #                     continue
+                        if x < 0 or y < 0:
+                            self.logger.info("Illegal robot coordinate, ignoring...")
+                            continue
 
-        #                 self.robot = {"x": x, "y": y, "dir": dir}
-        #                 print("Robot set successfully: ", json.dumps(self.robot))
-        #             else:
-        #                 # Catch for messages with no keywords (OBSTACLE/ROBOT/BEGIN)
-        #                 print("Not a keyword, message received: ", message_rcv)
+                        self.robot = {"x": x, "y": y, "dir": dir}
+                        self.logger.info(
+                            "Robot set successfully: ", json.dumps(self.robot)
+                        )
+                    else:
+                        # Catch for messages with no keywords (OBSTACLE/ROBOT/BEGIN)
+                        self.logger.info(
+                            "Not a keyword, message received: ", message_rcv
+                        )
 
-        #     except OSError:
-        #         # self.android_dropped.set()
-        #         print("Event set: Bluetooth connection dropped")
+            except OSError:
+                # self.android_dropped.set()
+                self.logger.info("Event set: Bluetooth connection dropped")
 
-        #     if message_rcv is None:
-        #         continue
+            if message_rcv is None:
+                continue
+
+    def run_task_2(self) -> None:
+        """
+        Main running function in a while loop
+        :return:
+        """
+        self.connect()
+        self.logger.info("Went into android receive function")
+
+        # Task 2
+        while True:
+            message_rcv = None
+            try:
+                message_rcv = self.android.receive()
+
+                if "BEGIN" in message_rcv:
+                    # Begin Task 2
+                    self.logger.info("Beginning run.")
+                    self.start()
+
+            except OSError:
+                self.android_dropped.set()
+                print("Event set: Bluetooth connection dropped")
+            if message_rcv is None:
+                continue
