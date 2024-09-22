@@ -6,7 +6,7 @@ from modules.web_server.connection_handler import connection_handler
 from modules.web_server.connection_manager import ConnectionManager
 
 from modules.serial.stm32 import STM
-
+from modules.gamestate import GameState
 
 socket_endpoints = APIRouter()
 
@@ -19,6 +19,9 @@ async def connect(websocket: WebSocket):
     logging.getLogger().info("New WS connection")
     await websocket.accept()
     await ConnectionManager().connect(websocket)
+    # Initialize GameState and run the required task
+    game_state = GameState()
+    game_state._run_task_checklist_a5()
     await connection_handler(websocket)
 
 

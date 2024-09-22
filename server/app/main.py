@@ -21,7 +21,6 @@ def run_web_server(ready_event) -> None:
     init_logger()
     logging.getLogger().info("Starting server as main!")
     web_server = WebServer().get_web_server()
-    ready_event.set()  # Signal that the web server is ready
     uvicorn.run(
         web_server,
         host="0.0.0.0",
@@ -29,6 +28,7 @@ def run_web_server(ready_event) -> None:
         log_level="debug",
         log_config=None,
     )
+    ready_event.set()  # Signal that the web server is ready
 
 
 def run_bluetooth_server(ready_event) -> None:
@@ -85,10 +85,6 @@ def main():
     stm_ready.wait()
 
     logging.getLogger().info("All processes initialized. Now initializing GameState.")
-
-    # Initialize GameState and run the required task
-    game_state = GameState()
-    game_state._run_task_checklist_a5()
 
     for p in processes:
         p.join()

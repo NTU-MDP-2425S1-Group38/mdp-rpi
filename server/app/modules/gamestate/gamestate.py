@@ -180,31 +180,54 @@ class GameState(metaclass=Singleton):
         """
         self.stm.connect()
         self.logger.info("Starting task A5")
-        # image_id = None
+        count = [0]  # Using a list to store count, as it's mutable
 
         def move_to_next_face_and_capture(cv_res: CvResponse) -> None:
-            if cv_res.label not in [
+            # Access count from the outer scope
+            if cv_res.label in [
                 ObstacleLabel.Unknown,
                 ObstacleLabel.Shape_Bullseye,
             ]:
-                self.logger.info("Label not detected! Moving to next face!")
+                if count[0] > 2:
+                    return
+                self.logger.info(
+                    f"Label not detected! Moving to next face! Count: {count[0]}"
+                )
+
                 # Move to next face
                 self.stm.send_cmd("T", 55, 25, 90)
+                self.stm.send_cmd("T", 55, -25, 0)
                 self.stm.send_cmd("T", 55, -25, 90)
                 self.stm.send_cmd("T", 55, -25, 90)
                 self.logger.info("Commands sent, waiting for completion!")
-                self.stm.wait_receive()
+
+                f_count = 0
+                while True:
+                    message_rcv = self.stm.wait_receive()
+                    print(message_rcv)
+                    if message_rcv[0] == "f":
+                        f_count += 1
+                    if f_count == 4:
+                        break
+
                 self.logger.info("Commands completed, taking picture!")
+                count[0] += 1  # Increment count
                 self.capture_and_process_image(move_to_next_face_and_capture)
 
-        self.logger.info("initiating and moving forward to objective")
-        self.stm.send_cmd("T", 55, 90, 20)
+        self.logger.info("Initiating and moving forward to objective")
+        self.stm.send_cmd("T", 55, 0, 20)
         self.logger.info("Commands sent, waiting for completion!")
-        self.stm.wait_receive()
+
+        while True:
+            message_rcv = self.stm.wait_receive()
+            print(message_rcv)
+            if message_rcv[0] == "f":
+                break
+
         self.logger.info("Commands completed, taking picture!")
         self.capture_and_process_image(move_to_next_face_and_capture)
 
-        self.logger.info("Task a5 completed!")
+        self.logger.info("Task A5 completed!")
 
     """
     Methods related to task 1.
