@@ -19,7 +19,6 @@ from modules.serial import STM
 from utils.instructions import Instructions
 from modules.camera.camera import Camera
 
-# from modules.serial.stm32 import STM
 from modules.web_server.connection_manager import ConnectionManager
 from utils.metaclass.singleton import Singleton
 
@@ -33,7 +32,6 @@ class GameState(metaclass=Singleton):
 
     camera: Camera
     connection_manager: ConnectionManager
-    stm: STM
 
     obstacles: List[Obstacle] = []
     instruction: Instructions = Instructions()
@@ -180,6 +178,7 @@ class GameState(metaclass=Singleton):
         Obstacles need to be set and instructions need to be added prior to running.
         :return: None
         """
+        self.stm.connect()
         self.logger.info("Starting task A5")
         # image_id = None
 

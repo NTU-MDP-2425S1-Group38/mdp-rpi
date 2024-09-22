@@ -5,7 +5,7 @@ import logging
 import os
 import signal
 import sys
-from multiprocessing import Process
+from multiprocessing import Process, Event
 from dotenv import load_dotenv
 from modules.serial.stm32 import STM
 from modules.serial.android import Android
@@ -16,11 +16,12 @@ from utils.logger import init_logger
 import uvicorn
 
 
-def run_web_server() -> None:
+def run_web_server(ready_event) -> None:
     load_dotenv()
     init_logger()
     logging.getLogger().info("Starting server as main!")
     web_server = WebServer().get_web_server()
+    ready_event.set()  # Signal that the web server is ready
     uvicorn.run(
         web_server,
         host="0.0.0.0",
@@ -30,18 +31,20 @@ def run_web_server() -> None:
     )
 
 
-def run_bluetooth_server() -> None:
+def run_bluetooth_server(ready_event) -> None:
     load_dotenv()
     init_logger()
     android = Android()
+    ready_event.set()  # Signal that the Bluetooth server is ready
     android.run()
 
 
-def run_stm():
+def run_stm(ready_event) -> None:
     load_dotenv()
     init_logger()
     stm = STM()
     stm.connect()
+    ready_event.set()  # Signal that the STM is ready
 
 
 def main():
@@ -49,6 +52,9 @@ def main():
     init_logger()
 
     processes = []
+    web_server_ready = Event()
+    bluetooth_ready = Event()
+    stm_ready = Event()
 
     def signal_handler(signum, frame):
         logging.getLogger().info(
@@ -63,21 +69,29 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    server_process = Process(target=run_web_server)
-    bluetooth_process = Process(target=run_bluetooth_server)
-    stm_process = Process(target=run_stm)
+    # Create the processes and pass the ready events
+    server_process = Process(target=run_web_server, args=(web_server_ready,))
+    bluetooth_process = Process(target=run_bluetooth_server, args=(bluetooth_ready,))
+    stm_process = Process(target=run_stm, args=(stm_ready,))
 
     processes.extend([server_process, bluetooth_process, stm_process])
 
     for p in processes:
         p.start()
 
+    # Wait for all processes to signal that they are ready
+    web_server_ready.wait()
+    bluetooth_ready.wait()
+    stm_ready.wait()
+
+    logging.getLogger().info("All processes initialized. Now initializing GameState.")
+
+    # Initialize GameState and run the required task
+    game_state = GameState()
+    game_state._run_task_checklist_a5()
+
     for p in processes:
         p.join()
-
-    # cam = Camera()
-    # while True:
-    #     cam.capture()
 
 
 if __name__ == "__main__":

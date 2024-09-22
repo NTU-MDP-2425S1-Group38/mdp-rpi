@@ -58,7 +58,7 @@ class STM(metaclass=Singleton):
         """
         while True:
             if self.serial_link.in_waiting > 0:
-                return str(self.serial.read_all(), "utf-8")
+                return str(self.serial_link.read_all(), "utf-8")
 
     # def callback(n):
     #     print("Sum = {}".format(n))
