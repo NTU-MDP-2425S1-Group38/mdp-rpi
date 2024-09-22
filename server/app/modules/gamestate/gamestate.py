@@ -228,6 +228,7 @@ class GameState(metaclass=Singleton):
         self.capture_and_process_image(move_to_next_face_and_capture)
 
         self.logger.info("Task A5 completed!")
+        return
 
     """
     Methods related to task 1.
