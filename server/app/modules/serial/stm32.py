@@ -2,7 +2,8 @@ from utils.metaclass.singleton import Singleton
 from .configuration import BAUD_RATE, SERIAL_PORT
 from pathlib import Path
 from typing import Optional
-from modules.gamestate.gamestate import GameState
+
+# from modules.gamestate import GameState
 import time
 
 # from modules.serial.android import Android
@@ -19,7 +20,7 @@ class STM(metaclass=Singleton):
         """
         self.serial_link = None
         self.received = []
-        self.gamestate = GameState()
+        # self.gamestate = GameState()
 
     def connect(self):
         """Connect to STM32 using serial UART connection, given the serial port and the baud rate"""
@@ -58,6 +59,16 @@ class STM(metaclass=Singleton):
         while True:
             if self.serial_link.in_waiting > 0:
                 return str(self.serial.read_all(), "utf-8")
+
+    # def callback(n):
+    #     print("Sum = {}".format(n))
+
+    # def main(a, b, _callback = None):
+    #     print("adding {} + {}".format(a, b))
+    #     if _callback:
+    #         _callback(a+b)
+
+    # main(1, 2, callback)
 
     def run_task_1(self):
         """Run the STM32 module."""

@@ -7,12 +7,11 @@ import signal
 import sys
 from multiprocessing import Process
 from dotenv import load_dotenv
-
-from modules.camera.camera import Camera
-from modules.gamestate.gamestate import GameState
-from modules.web_server.web_server import WebServer
 from modules.serial.stm32 import STM
 from modules.serial.android import Android
+from modules.camera.camera import Camera
+from modules.gamestate import GameState
+from modules.web_server.web_server import WebServer
 from utils.logger import init_logger
 import uvicorn
 

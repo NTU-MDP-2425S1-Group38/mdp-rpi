@@ -15,7 +15,7 @@ from app_types.primatives.command import (
 )
 from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
-from modules.serial.stm32 import STM
+from modules.serial import STM
 from utils.instructions import Instructions
 from modules.camera.camera import Camera
 
@@ -33,12 +33,12 @@ class GameState(metaclass=Singleton):
 
     camera: Camera
     connection_manager: ConnectionManager
-    # stm: STM
+    stm: STM
 
     obstacles: List[Obstacle] = []
     instruction: Instructions = Instructions()
 
-    def __init__(self, is_outdoors:bool = False):
+    def __init__(self, is_outdoors: bool = False):
         self.logger.info("Initialising connection manager")
         self.connection_manager = ConnectionManager()
 
@@ -184,52 +184,26 @@ class GameState(metaclass=Singleton):
         # image_id = None
 
         def move_to_next_face_and_capture(cv_res: CvResponse) -> None:
-            if cv_res.label not in [ObstacleLabel.Unknown, ObstacleLabel.Shape_Bullseye]:
+            if cv_res.label not in [
+                ObstacleLabel.Unknown,
+                ObstacleLabel.Shape_Bullseye,
+            ]:
+                self.logger.info("Label not detected! Moving to next face!")
                 # Move to next face
                 self.stm.send_cmd("T", 55, 25, 90)
                 self.stm.send_cmd("T", 55, -25, 90)
                 self.stm.send_cmd("T", 55, -25, 90)
+                self.logger.info("Commands sent, waiting for completion!")
+                self.stm.wait_receive()
+                self.logger.info("Commands completed, taking picture!")
                 self.capture_and_process_image(move_to_next_face_and_capture)
 
+        self.logger.info("initiating and moving forward to objective")
         self.stm.send_cmd("T", 55, 90, 20)
+        self.logger.info("Commands sent, waiting for completion!")
+        self.stm.wait_receive()
+        self.logger.info("Commands completed, taking picture!")
         self.capture_and_process_image(move_to_next_face_and_capture)
-
-
-        # while True:
-        #     # South to East to North to West
-        #
-        #     # Move forward to South
-        #     stm.send_cmd("T", 55, 90, 20)
-        #     self.capture_and_process_image(1)
-        #     if image_id != "bullseye":
-        #         break
-        #
-        #     # Move to East
-        #     # Backward (90-100cm)
-        #     stm.send_cmd("T", 55, 25, 90)
-        #     stm.send_cmd("T", 55, -25, 90)
-        #     stm.send_cmd("T", 55, -25, 90)
-        #     self.capture_and_process_image(1)
-        #     if image_id != "bullseye":
-        #         break
-        #
-        #     # Move to North
-        #     # Backward (90-100cm)
-        #     stm.send_cmd("T", 55, 25, 90)
-        #     stm.send_cmd("T", 55, -25, 90)
-        #     stm.send_cmd("T", 55, -25, 90)
-        #     self.capture_and_process_image(1)
-        #     if image_id != "bullseye":
-        #         break
-        #
-        #     # Move to West
-        #     # Backward (90-100cm)
-        #     stm.send_cmd("T", 55, 25, 90)
-        #     stm.send_cmd("T", 55, -25, 90)
-        #     stm.send_cmd("T", 55, -25, 90)
-        #     self.capture_and_process_image(1)
-        #     if image_id != "bullseye":
-        #         break
 
         self.logger.info("Task a5 completed!")
 
@@ -556,8 +530,9 @@ class GameState(metaclass=Singleton):
         :param task: Literal[1, 2] corresponding to which task
         :return: None
         """
+        self._run_task_checklist_a5()
+
         if task == 1:
             self._run_task_one()
         elif task == 2:
             self._run_task_two(None)
-

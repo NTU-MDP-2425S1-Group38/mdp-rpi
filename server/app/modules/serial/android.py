@@ -9,8 +9,8 @@ from typing import Optional
 
 import bluetooth
 
-from modules.gamestate.gamestate import GameState
-from modules.serial.stm32 import STM
+# from modules.gamestate import GameState
+from modules.serial import STM
 
 from utils.metaclass.singleton import Singleton
 from app_types.obstacle import Obstacle
@@ -75,7 +75,7 @@ class Android(metaclass=Singleton):
         self.server_socket = None
         self.logger = logging.getLogger()
         self.obstacle_dict: dict[str, Obstacle] = {}
-        self.gamestate = GameState()
+        # self.gamestate = GameState()
         self.stm = STM()
 
     def connect(self):
