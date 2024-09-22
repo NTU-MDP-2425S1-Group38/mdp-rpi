@@ -196,6 +196,12 @@ class GameState(metaclass=Singleton):
 
                 # Move to next face
                 self.stm.send_cmd("T", 55, 25, 90)
+                while True:
+                    message_rcv = self.stm.wait_receive()
+                    print(message_rcv)
+                    if message_rcv[0] == "f":
+                        break
+
                 self.stm.send_cmd("T", 55, -25, 0)
                 self.stm.send_cmd("T", 55, -25, 90)
                 self.stm.send_cmd("T", 55, -25, 90)
@@ -207,7 +213,7 @@ class GameState(metaclass=Singleton):
                     print(message_rcv)
                     if message_rcv[0] == "f":
                         f_count += 1
-                    if f_count == 4:
+                    if f_count == 3:
                         break
 
                 self.logger.info("Commands completed, taking picture!")
