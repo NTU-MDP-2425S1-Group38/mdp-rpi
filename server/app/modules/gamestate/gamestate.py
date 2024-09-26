@@ -196,7 +196,7 @@ class GameState(metaclass=Singleton):
 
                 # Move to next face
                 self.stm.send_cmd("t", 55, 0, 85)
-                self.stm.send_cmd("T", 55, 25, 87)
+                self.stm.send_cmd("T", 55, 25, 89)
                 while True:
                     message_rcv = self.stm.wait_receive()
                     print(message_rcv)
@@ -204,6 +204,11 @@ class GameState(metaclass=Singleton):
                         break
 
                 self.stm.send_cmd("T", 55, -25, 0)
+                while True:
+                    message_rcv = self.stm.wait_receive()
+                    print(message_rcv)
+                    if message_rcv[0] == "f":
+                        break
                 self.stm.send_cmd("T", 55, -25, 90)
                 self.stm.send_cmd("T", 55, -25, 90)
                 self.logger.info("Commands sent, waiting for completion!")
