@@ -203,7 +203,7 @@ class GameState(metaclass=Singleton):
                     if message_rcv[0] == "f":
                         break
 
-                self.stm.send_cmd("T", 55, -25, 90)
+                self.stm.send_cmd("T", 55, -25, 0)
                 while True:
                     message_rcv = self.stm.wait_receive()
                     print(message_rcv)
