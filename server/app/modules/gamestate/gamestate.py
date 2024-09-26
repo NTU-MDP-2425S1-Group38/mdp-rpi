@@ -222,7 +222,7 @@ class GameState(metaclass=Singleton):
                 self.capture_and_process_image(move_to_next_face_and_capture)
 
         self.logger.info("Initiating and moving forward to objective")
-        # self.stm.send_cmd("T", 55, 0, 10)
+        self.stm.send_cmd("T", 55, 0, 10)
         self.logger.info("Commands sent, waiting for completion!")
 
         while True:
