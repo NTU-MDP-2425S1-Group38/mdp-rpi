@@ -209,8 +209,10 @@ class GameState(metaclass=Singleton):
                     print(message_rcv)
                     if message_rcv[0] == "f":
                         break
-                self.stm.send_cmd("T", 55, -25, 90)
-                self.stm.send_cmd("T", 55, -25, 90)
+                time.sleep(1)
+
+                self.stm.send_cmd("T", 55, -25, 88)
+                self.stm.send_cmd("T", 55, -25, 88)
                 self.logger.info("Commands sent, waiting for completion!")
 
                 f_count = 0
