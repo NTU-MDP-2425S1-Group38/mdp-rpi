@@ -151,14 +151,9 @@ class Android(metaclass=Singleton):
     def receive(self) -> Optional[str]:
         """Receive message from Android"""
         try:
-            # ~ while True:
-            # Default code to receive data from Android in JSON format. - Bryan
             unclean_message = self.client_socket.recv(1024)
             message = unclean_message.strip().decode("utf-8")
-            # ~ self.logger.info("Message received from Android: %s", str(message))
-            # ~ response_data = "Message received successfully!"
-            # ~ self.client_socket.send(response_data.encode('utf-8'))
-            # ~ self.logger.info(message)
+            self.logger.info("Message received from Android: %s", str(message))
             return message
         except OSError as e:  # connection broken, try to reconnect
             self.logger.error(f"Message failed to be received: {str(e)}")

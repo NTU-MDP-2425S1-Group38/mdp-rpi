@@ -18,3 +18,4 @@ venv/
 ### Ignore server logs
 /server/app/logs/*
 !/server/app/logs/*.md
+.DS_Store

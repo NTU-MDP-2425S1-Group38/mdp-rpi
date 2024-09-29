@@ -155,7 +155,7 @@ class GameState(metaclass=Singleton):
         self.instruction.add(commands)
         return
 
-    def set_obstacles(self, *obstacles: Obstacle) -> None:
+    def set_obstacles(self, *obstacles: Obstacle) -> Instructions:
         """
         Method to set the obstacles in gamestate.
         This needs to be done prior to "running" task 1.
@@ -167,6 +167,7 @@ class GameState(metaclass=Singleton):
         self.connection_manager.slave_request_algo(
             self.obstacles, self._algo_response_callback
         )
+        return self.instruction
 
     """
     Methods related to checklist task a5.

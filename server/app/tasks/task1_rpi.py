@@ -4,28 +4,37 @@ import time
 from multiprocessing import Manager
 from threading import Thread
 
-sys.path.insert(1, "/home/raspberrypi/Desktop/MDP Group 14 Repo/SC2079/RPi")
-from Communication.android import Android
-from Communication.pc import PC
-from Communication.stm import STM
-from openapi_client.api.pathfinding_api import PathfindingApi
-from openapi_client.api_client import ApiClient
+from modules.serial.android import Android
+from modules.serial.stm32 import STM
+from server.app.app_types.obstacle import Obstacle
+from server.app.app_types.primatives.command import (
+    CommandInstruction,
+    MoveInstruction,
+    TurnInstruction,
+)
+from server.app.app_types.primatives.position import Position
+from server.app.utils.instructions import Instructions
 
-# Pathfinding
-from openapi_client.configuration import Configuration
-from openapi_client.models.direction import Direction
-from openapi_client.models.misc_instruction import MiscInstruction
-from openapi_client.models.pathfinding_point import PathfindingPoint
-from openapi_client.models.pathfinding_request import PathfindingRequest
-from openapi_client.models.pathfinding_request_obstacle import (
-    PathfindingRequestObstacle,
-)
-from openapi_client.models.pathfinding_request_robot import PathfindingRequestRobot
-from openapi_client.models.pathfinding_response_move_instruction import (
-    PathfindingResponseMoveInstruction,
-)
-from openapi_client.models.turn_instruction import TurnInstruction
-from TestingScripts.Camera_Streaming_UDP.stream_server import StreamServer
+# # To be explored
+# from Communication.pc import PC
+# from openapi_client.api.pathfinding_api import PathfindingApi
+# from openapi_client.api_client import ApiClient
+
+# # Pathfinding
+# from openapi_client.configuration import Configuration
+# from openapi_client.models.direction import Direction
+# from openapi_client.models.misc_instruction import MiscInstruction
+# from openapi_client.models.pathfinding_point import PathfindingPoint
+# from openapi_client.models.pathfinding_request import PathfindingRequest
+# from openapi_client.models.pathfinding_request_obstacle import (
+#     PathfindingRequestObstacle,
+# )
+# from openapi_client.models.pathfinding_request_robot import PathfindingRequestRobot
+# from openapi_client.models.pathfinding_response_move_instruction import (
+#     PathfindingResponseMoveInstruction,
+# )
+# from openapi_client.models.turn_instruction import TurnInstruction
+# from TestingScripts.Camera_Streaming_UDP.stream_server import StreamServer
 
 
 class Task1RPI:
@@ -33,23 +42,23 @@ class Task1RPI:
         self.config = config
 
         self.obstacle_dict = {}  # Obstacle Dict
+        self.robot = None  # Robot
         self.prev_image = None
         self.stm = STM()
         self.android = Android()
-        # self.android = AndroidDummy()
-        self.pc = PC()
+        # self.pc = PC()
         self.manager = Manager()
         self.process_stm_receive = None
         self.process_pc_receive = None
         self.process_pc_stream = None
         self.process_android_receive = None
         self.android_dropped = self.manager.Event()
-        self.host = "192.168.14.14"
-        self.port = 5000
-        self.conf = Configuration(host="http://192.168.14.13:5001")
-        self.pathfinding_api = PathfindingApi(
-            api_client=ApiClient(configuration=self.conf)
-        )
+
+        # self.conf = Configuration(host="http://192.168.14.13:5001")
+        # self.pathfinding_api = PathfindingApi(
+        #     api_client=ApiClient(configuration=self.conf)
+        # )
+
         self.last_image = None
         self.prev_image = None
         self.STM_Stopped = False
@@ -78,9 +87,6 @@ class Task1RPI:
             self.process_pc_receive.start()  # Receive from PC
             self.process_android_receive.start()  # Receive from android
             self.process_stm_receive.start()  # Receive from PC
-
-            # Manual init
-            # self.manual_init()
 
         except OSError as e:
             print("Initialization failed: ", e)
@@ -118,15 +124,6 @@ class Task1RPI:
         StreamServer().start(
             framerate=15, quality=45, is_outdoors=self.config.is_outdoors
         )
-
-    def get_api_object(self, Object, dir, sw, size, id=None):
-        # TODO: test 200x200
-        x, y = sw
-        w, h = size
-
-        direction = Direction(dir)
-        south_west = PathfindingPoint(x=x, y=y)
-        north_east = PathfindingPoint(x=(x + w) - 1, y=(y + h) - 1)
 
         if id is not None:
             return Object(
@@ -173,12 +170,10 @@ class Task1RPI:
                             print("Invalid direction provided:", dir + ", ignoring...")
                             continue
                         else:
-                            newObstacle = self.get_api_object(
-                                PathfindingRequestObstacle,
-                                dir,
-                                (int(x), int(y)),
-                                (10, 10),
+                            newObstacle = Obstacle(
                                 id=id,
+                                position=Position(int(x), int(y)),
+                                direction=dir,
                             )
                             self.obstacle_dict[id] = newObstacle
 
@@ -202,9 +197,7 @@ class Task1RPI:
                             print("Illegal robot coordinate, ignoring...")
                             continue
 
-                        self.robot = self.get_api_object(
-                            PathfindingRequestRobot, dir, (int(x), int(y)), (21, 21)
-                        )
+                        self.robot = {"x": x, "y": y, "dir": dir}
                         print("Robot set successfully: ", self.robot)
                     else:
                         # Catch for messages with no keywords (OBSTACLE/ROBOT/BEGIN)
@@ -299,15 +292,17 @@ class Task1RPI:
 
     # Done (Gamestate)
     def start(self):
-        pathfindingRequest = PathfindingRequest(
-            obstacles=self.obstacle_dict.values(), robot=self.robot, verbose=False
-        )
-        response = None
+        # pathfindingRequest = PathfindingRequest(
+        #     obstacles=self.obstacle_dict.values(), robot=self.robot, verbose=False
+        # )
+        obstacles = list(self.obstacle_dict.values())
+        response: Instructions = None
 
         self.start_time = time.time_ns()
         print("! Sending request to API...")
         try:
-            response = self.pathfinding_api.pathfinding_post(pathfindingRequest)
+            # response = self.pathfinding_api.pathfinding_post(pathfindingRequest)
+            response = self.gamestate.set_obstacles(obstacles)
         except:
             print("Server failed, try again.")
             return
@@ -315,70 +310,45 @@ class Task1RPI:
         print(
             f"! Request completed in {(time.time_ns() - self.start_time) / 1e9:.3f}s."
         )
-        segments = response.segments
-        for i, segment in enumerate(segments):
-            print(f"On segment {i+1} of {len(segments)}:")
-            self.set_stm_stop(False)  # Reset to false upon starting the new segment
+        commands = response.commands
+        count = 0
+        while cmd := commands.pop():
+            self.logger.info(f"Current command: {cmd.model_dump()}")
+            angle = 0
+            val = 0
 
-            # print("PATH ", i, ": ", segment.path.actual_instance)
-            # print("Segment ", i, ": ", segment.instructions)
-            print("SEGMENT NUMBER ", i)
-            i = i + 1
-
-            for instruction in segment.instructions:
-                actual_instance = instruction.actual_instance
-                inst = ""
-                flag = ""
+            if isinstance(cmd.value, MoveInstruction):
+                move_direction = cmd.move.value
                 angle = 0
-                val = 0
+                val = cmd.amount
+                self.logger.info(f"AMOUNT TO MOVE: {val}")
+                self.logger.info(f"MOVE DIRECTION: {move_direction}")
 
-                if hasattr(actual_instance, "move"):  # MOVE Instruction
-                    inst = PathfindingResponseMoveInstruction(
-                        amount=actual_instance.amount, move=actual_instance.move
-                    )
-                    move_direction = inst.move.value
-                    angle = 0
-                    val = inst.amount
-                    print("AMOUNT TO MOVE: ", val)
-                    print("MOVE DIRECTION: ", move_direction)
+                if move_direction == "FORWARD":
+                    flag = "T"
+                elif move_direction == "BACKWARD":
+                    flag = "t"
+            else:
+                if (
+                    isinstance(cmd.value, CommandInstruction)
+                    and cmd.value == "CAPTURE_IMAGE"
+                ):
+                    flag = "S"
+                    count += 1
 
-                    # Send instructions to stm
-                    if move_direction == "FORWARD":
+                elif isinstance(cmd.value, TurnInstruction):
+                    val = 90
+                    if cmd.value == "FORWARD_LEFT":
                         flag = "T"
-                    elif move_direction == "BACKWARD":
+                        angle = -self.drive_angle
+                    elif cmd.value == "FORWARD_RIGHT":
+                        flag = "T"
+                        angle = self.drive_angle
+                    elif cmd.value == "BACKWARD_LEFT":
                         flag = "t"
+                        angle = -self.drive_angle
 
-                else:
-                    try:
-                        inst = TurnInstruction(actual_instance)  # TURN Instruction
-                    except:
-                        inst = MiscInstruction(actual_instance)  # MISC Instruction
-
-                    # print("Final Instruction ", inst)
-                    if (
-                        isinstance(inst, MiscInstruction)
-                        and str(inst.value) == "CAPTURE_IMAGE"
-                    ):
-                        flag = "S"  # STM to stop before recognising image and sending results to RPi
-
-                    elif isinstance(inst, TurnInstruction):
-                        val = 90
-                        inst_send = inst.value
-                        if inst.value == "FORWARD_LEFT":
-                            flag = "T"
-                            angle = -self.drive_angle
-                        elif inst.value == "FORWARD_RIGHT":
-                            flag = "T"
-                            angle = self.drive_angle
-                        elif inst.value == "BACKWARD_LEFT":
-                            flag = "t"
-                            angle = -self.drive_angle
-                        else:
-                            # BACKWARD_RIGHT
-                            flag = "t"
-                            angle = self.drive_angle
-
-                self.stm.send_cmd(flag, self.drive_speed, angle, val)
+            self.stm.send_cmd(flag, self.drive_speed, angle, val)
             print("STM Command sent successfully...")
             while not self.get_stm_stop():
                 # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
@@ -386,14 +356,84 @@ class Task1RPI:
 
             time.sleep(0.75)
             print("STM stopped, sending time of capture...")
-            self.pc.send(f"DETECT,{segment.image_id}")
+            self.pc.send(f"DETECT,{cmd.capture_id}")
+
+        # Original code
+        # for i, segment in enumerate(segments):
+        #     print(f"On segment {i+1} of {len(segments)}:")
+        #     self.set_stm_stop(False)  # Reset to false upon starting the new segment
+
+        #     print("SEGMENT NUMBER ", i)
+        #     i = i + 1
+
+        #     for instruction in segment.instructions:
+        #         actual_instance = instruction.actual_instance
+        #         inst = ""
+        #         flag = ""
+        #         angle = 0
+        #         val = 0
+
+        #         if hasattr(actual_instance, "move"):  # MOVE Instruction
+        #             inst = PathfindingResponseMoveInstruction(
+        #                 amount=actual_instance.amount, move=actual_instance.move
+        #             )
+        #             move_direction = inst.move.value
+        #             angle = 0
+        #             val = inst.amount
+        #             print("AMOUNT TO MOVE: ", val)
+        #             print("MOVE DIRECTION: ", move_direction)
+
+        #             # Send instructions to stm
+        #             if move_direction == "FORWARD":
+        #                 flag = "T"
+        #             elif move_direction == "BACKWARD":
+        #                 flag = "t"
+
+        #         else:
+        #             try:
+        #                 inst = TurnInstruction(actual_instance)  # TURN Instruction
+        #             except:
+        #                 inst = MiscInstruction(actual_instance)  # MISC Instruction
+
+        #             # print("Final Instruction ", inst)
+        #             if (
+        #                 isinstance(inst, MiscInstruction)
+        #                 and str(inst.value) == "CAPTURE_IMAGE"
+        #             ):
+        #                 flag = "S"  # STM to stop before recognising image and sending results to RPi
+
+        #             elif isinstance(inst, TurnInstruction):
+        #                 val = 90
+        #                 if inst.value == "FORWARD_LEFT":
+        #                     flag = "T"
+        #                     angle = -self.drive_angle
+        #                 elif inst.value == "FORWARD_RIGHT":
+        #                     flag = "T"
+        #                     angle = self.drive_angle
+        #                 elif inst.value == "BACKWARD_LEFT":
+        #                     flag = "t"
+        #                     angle = -self.drive_angle
+        #                 else:
+        #                     # BACKWARD_RIGHT
+        #                     flag = "t"
+        #                     angle = self.drive_angle
+
+        #         self.stm.send_cmd(flag, self.drive_speed, angle, val)
+        #     print("STM Command sent successfully...")
+        #     while not self.get_stm_stop():
+        #         # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
+        #         pass
+
+        #     time.sleep(0.75)
+        #     print("STM stopped, sending time of capture...")
+        #     self.pc.send(f"DETECT,{segment.image_id}")
 
         print(
             f">>>>>>>>>>>> Completed in {(time.time_ns() - self.start_time) / 1e9:.2f} seconds."
         )
         try:
             print("request stitch")
-            self.pc.send(f"PERFORM STITCHING,{len(segments)}")
+            self.pc.send(f"PERFORM STITCHING,{len(count)}")
         except OSError as e:
             print("Error in sending stitching command to PC: " + e)
 
