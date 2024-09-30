@@ -103,23 +103,16 @@ class Task1RPI:
             return
 
         # Parse response
-        result = json.loads(response.content)["data"]
-        commands = result["commands"]
-        path = result["path"]
+        print(response)
+
+        # result = json.loads(response.content)["data"]
+        # commands = result["commands"]
+        # path = result["path"]
 
         # Log commands received
-        self.logger.debug(f"Commands received from API: {commands}")
+        # self.logger.debug(f"Commands received from API: {commands}")
 
-        # Put commands and paths into respective queues
-        self.clear_queues()
-        for c in commands:
-            self.command_queue.put(c)
-        for p in path[
-            1:
-        ]:  # ignore first element as it is the starting position of the robot
-            self.path_queue.put(p)
-
-        self.logger.info("Commands and path received Algo API. Robot is ready to move.")
+        # self.logger.info("Commands and path received Algo API. Robot is ready to move.")
 
     def initialize(self):
         try:
