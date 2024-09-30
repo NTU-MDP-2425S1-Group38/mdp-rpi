@@ -1,8 +1,10 @@
+import sys
 import os
 import time
 from multiprocessing import Manager
 from threading import Thread
 
+sys.path.insert(1, "/home/user/mdp-rpi/server")
 from modules.serial.android import Android
 from modules.serial.stm32 import STM
 from server.app.app_types.obstacle import Obstacle
