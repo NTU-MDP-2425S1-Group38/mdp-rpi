@@ -1,12 +1,17 @@
-import sys
+import json
 import os
 import time
 from multiprocessing import Manager
 from threading import Thread
 
-sys.path.insert(1, "/home/user/mdp-rpi/server")
+import requests
+import uvicorn
+from dotenv import load_dotenv
 from modules.serial.android import Android
 from modules.serial.stm32 import STM
+from modules.web_server.web_server import WebServer
+from utils.logger import init_logger
+
 from server.app.app_types.obstacle import Obstacle
 from server.app.app_types.primatives.command import (
     CommandInstruction,
@@ -15,12 +20,6 @@ from server.app.app_types.primatives.command import (
 )
 from server.app.app_types.primatives.position import Position
 from server.app.utils.instructions import Instructions
-from dotenv import load_dotenv
-from utils.logger import init_logger
-from modules.web_server.web_server import WebServer
-import uvicorn
-import requests
-import json
 
 # # To be explored
 # from Communication.pc import PC
