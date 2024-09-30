@@ -94,6 +94,7 @@ class Task1RPI:
             {"id": o.id, "x": o.position.x, "y": o.position.y, "d": o.direction}
             for o in obstacles
         ]
+        print("algo")
         body = {
             "cat": "obstacles",
             "value": {"obstacles": [converted_obstacles], "mode": 0},
