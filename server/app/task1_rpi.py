@@ -12,14 +12,14 @@ from modules.serial.stm32 import STM
 from modules.web_server.web_server import WebServer
 from utils.logger import init_logger
 
-from server.app.app_types.obstacle import Obstacle
-from server.app.app_types.primatives.command import (
+from app_types.obstacle import Obstacle
+from app_types.primatives.command import (
     CommandInstruction,
     MoveInstruction,
     TurnInstruction,
 )
-from server.app.app_types.primatives.position import Position
-from server.app.utils.instructions import Instructions
+from app_types.primatives.position import Position
+from utils.instructions import Instructions
 
 # # To be explored
 # from Communication.pc import PC
