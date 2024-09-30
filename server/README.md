@@ -42,7 +42,7 @@ Backward-Left | t,10,-25,90
 For Bluetooth:
 https://bluedot.readthedocs.io/en/latest/pairpiandroid.html
 
-During start-up, always ensure bluetooth between android & RPI is functional.
+**During start-up, always ensure bluetooth between android & RPI is functional.**
 
 commands:
 sudo chmod o+rw /var/run/sdp
