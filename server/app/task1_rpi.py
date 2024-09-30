@@ -232,7 +232,7 @@ class Task1RPI:
                         else:
                             newObstacle = Obstacle(
                                 id=id,
-                                position=Position(int(x), int(y)),
+                                position=Position(x=int(x), y=int(y)),
                                 direction=dir,
                             )
                             self.obstacle_dict[id] = newObstacle
