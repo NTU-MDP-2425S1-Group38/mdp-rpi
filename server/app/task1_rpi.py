@@ -45,6 +45,13 @@ from utils.instructions import Instructions
 API_IP = "127.0.0.1"
 API_PORT = 8000
 
+obstacle_direction = {
+    "NORTH": 1,
+    "SOUTH": 2,
+    "EAST": 3,
+    "WEST": 4,
+}
+
 
 class Task1RPI:
     def __init__(self, config):
@@ -233,7 +240,7 @@ class Task1RPI:
                             newObstacle = Obstacle(
                                 id=id,
                                 position=Position(x=int(x), y=int(y)),
-                                direction=dir,
+                                direction=obstacle_direction[dir],
                             )
                             self.obstacle_dict[id] = newObstacle
 
