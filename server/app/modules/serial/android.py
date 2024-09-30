@@ -105,16 +105,14 @@ class Android(metaclass=Singleton):
                 profiles=[bluetooth.SERIAL_PORT_PROFILE],
             )
 
-            self.logger.info(f"Awaiting bluetooth connection on port: {port}")
+            print(f"Awaiting bluetooth connection on port: {port}")
             self.client_socket, client_address = self.server_socket.accept()
-            self.logger.info(
-                f"Accepted connection from client address of: {str(client_address)}"
-            )
+            print(f"Accepted connection from client address of: {str(client_address)}")
             self.connected = True
 
         except Exception as e:
             # Prints out the error if socket connection failed.
-            self.logger.info("Android socket connection failed: %s", str(e))
+            print("Android socket connection failed: %s", str(e))
             self.server_socket.close()
             self.client_socket.close()
 
