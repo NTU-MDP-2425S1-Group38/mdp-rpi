@@ -60,16 +60,6 @@ class STM(metaclass=Singleton):
             if self.serial_link.in_waiting > 0:
                 return str(self.serial_link.read_all(), "utf-8")
 
-    # def callback(n):
-    #     print("Sum = {}".format(n))
-
-    # def main(a, b, _callback = None):
-    #     print("adding {} + {}".format(a, b))
-    #     if _callback:
-    #         _callback(a+b)
-
-    # main(1, 2, callback)
-
     def run_task_1(self):
         """Run the STM32 module."""
         self.connect()

@@ -1,5 +1,4 @@
-# import pyshine as ps
-import sys
+import os
 import time
 from multiprocessing import Manager
 from threading import Thread
@@ -14,6 +13,11 @@ from server.app.app_types.primatives.command import (
 )
 from server.app.app_types.primatives.position import Position
 from server.app.utils.instructions import Instructions
+from dotenv import load_dotenv
+from utils.logger import init_logger
+from modules.web_server.web_server import WebServer
+import uvicorn
+
 
 # # To be explored
 # from Communication.pc import PC
@@ -67,6 +71,41 @@ class Task1RPI:
         self.drive_speed = 40 if config.is_outdoors else 55
         self.drive_angle = 25
 
+    def request_algo(self, *obstacles: Obstacle):
+        """
+        Requests for a series of commands and the path from the Algo API.
+        The received commands and path are then queued in the respective queues
+        """
+
+        url = f"http://{API_IP}:{API_PORT}/path"
+        response = requests.post(url, json=body)
+
+        # Error encountered at the server, return early
+        if response.status_code != 200:
+            self.logger.error(
+                "Something went wrong when requesting path from Algo API."
+            )
+            return
+
+        # Parse response
+        result = json.loads(response.content)["data"]
+        commands = result["commands"]
+        path = result["path"]
+
+        # Log commands received
+        self.logger.debug(f"Commands received from API: {commands}")
+
+        # Put commands and paths into respective queues
+        self.clear_queues()
+        for c in commands:
+            self.command_queue.put(c)
+        for p in path[
+            1:
+        ]:  # ignore first element as it is the starting position of the robot
+            self.path_queue.put(p)
+
+        self.logger.info("Commands and path received Algo API. Robot is ready to move.")
+
     def initialize(self):
         try:
             # let stream server start before calling other sockets.
@@ -90,6 +129,19 @@ class Task1RPI:
 
         except OSError as e:
             print("Initialization failed: ", e)
+
+    def run_web_server(ready_event) -> None:
+        load_dotenv()
+        init_logger()
+        web_server = WebServer().get_web_server()
+        uvicorn.run(
+            web_server,
+            host="0.0.0.0",
+            port=int(os.getenv("WEB_SERVER_PORT", 8080)),  # converts str env var to int
+            log_level="debug",
+            log_config=None,
+        )
+        ready_event.set()  # Signal that the web server is ready
 
     def pc_receive(self) -> None:
         while True:
@@ -120,20 +172,20 @@ class Task1RPI:
                 print(f"Error in receiving data: {e}")
                 break
 
-    def stream_start(self):
-        StreamServer().start(
-            framerate=15, quality=45, is_outdoors=self.config.is_outdoors
-        )
+    # def stream_start(self):
+    #     StreamServer().start(
+    #         framerate=15, quality=45, is_outdoors=self.config.is_outdoors
+    #     )
 
-        if id is not None:
-            return Object(
-                direction=direction,
-                south_west=south_west,
-                north_east=north_east,
-                image_id=id,
-            )
+    #     if id is not None:
+    #         return Object(
+    #             direction=direction,
+    #             south_west=south_west,
+    #             north_east=north_east,
+    #             image_id=id,
+    #         )
 
-        return Object(direction=direction, south_west=south_west, north_east=north_east)
+    #     return Object(direction=direction, south_west=south_west, north_east=north_east)
 
     # Done (Android)
     def android_receive(self) -> None:
