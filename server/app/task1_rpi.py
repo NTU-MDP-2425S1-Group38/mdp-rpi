@@ -76,7 +76,7 @@ class Task1RPI:
         self.drive_speed = 40 if config.is_outdoors else 55
         self.drive_angle = 25
 
-    def request_algo(self, *obstacles: Obstacle):
+    def request_algo(self, obstacles: list[Obstacle]):
         """
         Requests for a series of commands and the path from the Algo API.
         The received commands and path are then queued in the respective queues
@@ -360,12 +360,13 @@ class Task1RPI:
 
         self.start_time = time.time_ns()
         print("! Sending request to API...")
-        try:
-            # response = self.pathfinding_api.pathfinding_post(pathfindingRequest)
-            response = self.gamestate.set_obstacles(obstacles)
-        except:
-            print("Server failed, try again.")
-            return
+        self.request_algo(obstacles)
+        # try:
+        #     # response = self.pathfinding_api.pathfinding_post(pathfindingRequest)
+        #     response = self.gamestate.set_obstacles(obstacles)
+        # except:
+        #     print("Server failed, try again.")
+        #     return
 
         print(
             f"! Request completed in {(time.time_ns() - self.start_time) / 1e9:.3f}s."
