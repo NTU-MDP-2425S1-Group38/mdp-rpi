@@ -58,7 +58,15 @@ class AndroidMessage:
         Returns the message as a JSON string.
         :return: JSON string representation of the message.
         """
-        return json.dumps({"type": self._type, "value": self._value})
+        return json.dumps({"type": self.cat, "value": self.value})
+
+    @property
+    def serial(self) -> str:
+        """
+        Returns serialised bluetooth message
+        :return: Str repr of the message
+        """
+        return f"{self.cat},{self.value}"
 
 
 class Android(metaclass=Singleton):
@@ -139,7 +147,7 @@ class Android(metaclass=Singleton):
         try:
             # Default code to send a message to Android. - Bryan
             # ~ self.client_socket.send(f"{message.jsonify}\n".encode("utf-8"))
-            self.client_socket.send(f"{message}\n".encode("utf-8"))
+            self.client_socket.send(f"{message.serial}\n".encode("utf-8"))
             self.logger.info("Sent to Android: %s", str(message))
             # ~ self.logger.info("Sent to Android: %s", str(message.jsonify))
         except OSError as e:
