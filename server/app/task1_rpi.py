@@ -401,7 +401,7 @@ class Task1RPI:
                     flag = "S"
                     count += 1
                     self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
-                    self.stop_and_snap(cmd)
+                    # self.stop_and_snap(cmd)
                     continue
 
                 elif cmd["value"] in [
