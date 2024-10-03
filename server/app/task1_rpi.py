@@ -12,6 +12,7 @@ from modules.serial.stm32 import STM
 from modules.web_server.web_server import WebServer
 from utils.logger import init_logger
 from modules.gamestate import GameState
+from multiprocessing import Process
 
 from app_types.obstacle import Obstacle
 from app_types.primatives.command import (
@@ -139,9 +140,9 @@ class Task1RPI:
             self.android.connect()
 
             print("PC Successfully connected through socket")
-            self.process_android_receive = Thread(target=self.android_receive)
-            self.process_stm_receive = Thread(target=self.stm_receive)
-            self.process_pc_receive = Thread(target=self.run_web_server)
+            self.process_android_receive = Process(target=self.android_receive)
+            self.process_stm_receive = Process(target=self.stm_receive)
+            self.process_pc_receive = Process(target=self.run_web_server)
 
             # Start Threads
             self.logger.info("Starting PC")
@@ -282,6 +283,7 @@ class Task1RPI:
                     self.set_stm_stop(
                         True
                     )  # Finished stopping, can start delay to recognise image
+                    self.gamestate.capture_and_process_image()
                     print("Setting STM Stopped to true")
                 elif message_rcv[0] == "f":
                     # Finished command, send to android
@@ -380,7 +382,6 @@ class Task1RPI:
             val = 0
 
             print(cmd)
-            print(cmd.keys)
 
             if isinstance(cmd["value"], dict) and cmd["value"]["move"] in [
                 "FORWARD",
