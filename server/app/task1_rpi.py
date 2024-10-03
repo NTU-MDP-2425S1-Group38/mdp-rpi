@@ -369,7 +369,8 @@ class Task1RPI:
             f"! Request completed in {(time.time_ns() - self.start_time) / 1e9:.3f}s."
         )
         count = 0
-        while cmd := commands.pop(0):
+        while len(commands) > 0:
+            cmd = commands.pop(0)
             self.logger.info(f"Current command: {cmd}")
             angle = 0
             flag = ""
@@ -414,7 +415,7 @@ class Task1RPI:
                         flag = "t"
                         angle = self.drive_angle
 
-            self.stm.send_cmd(flag, self.drive_speed, angle, val)
+            self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
             print("STM Command sent successfully...")
             while not self.get_stm_stop():
                 # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
