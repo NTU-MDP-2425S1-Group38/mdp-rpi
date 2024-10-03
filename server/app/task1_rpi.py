@@ -3,7 +3,7 @@ import os
 import time
 from multiprocessing import Manager
 from threading import Thread
-
+import logging
 import requests
 import uvicorn
 from dotenv import load_dotenv
@@ -56,6 +56,7 @@ obstacle_direction = {
 class Task1RPI:
     def __init__(self, config):
         self.config = config
+        self.logger = logging.getLogger("Task1RPI")
 
         self.obstacle_dict = {}  # Obstacle Dict
         self.robot = None  # Robot
