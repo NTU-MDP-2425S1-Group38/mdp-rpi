@@ -97,7 +97,7 @@ class Task1RPI:
         print("algo")
         body = {
             "cat": "obstacles",
-            "value": {"obstacles": [converted_obstacles], "mode": 0},
+            "value": {"obstacles": converted_obstacles, "mode": 0},
             "server_mode": "live",
             "algo_type": "Exhaustive Astar",
         }
