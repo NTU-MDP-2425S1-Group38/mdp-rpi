@@ -372,6 +372,7 @@ class Task1RPI:
         while cmd := commands.pop(0):
             self.logger.info(f"Current command: {cmd}")
             angle = 0
+            flag = ""
             val = 0
 
             print(cmd)
