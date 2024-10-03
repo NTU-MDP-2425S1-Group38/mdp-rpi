@@ -381,7 +381,6 @@ class Task1RPI:
             val = 0
 
             print(cmd)
-            print(cmd.keys)
 
             if isinstance(cmd["value"], dict) and cmd["value"]["move"] in [
                 "FORWARD",

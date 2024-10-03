@@ -42,8 +42,6 @@ class GameState(metaclass=Singleton):
         self.connection_manager = ConnectionManager()
 
         self.logger.info("Initialising STM connector")
-        self.stm = STM()
-        self.android = Android()
 
         self.is_outdoors = is_outdoors
 
@@ -138,7 +136,6 @@ class GameState(metaclass=Singleton):
         self.android.send(
             AndroidMessage("TARGET", f"{obstacle_index},{cv_response.label.value}")
         )
-
 
     def capture_and_update_label(self, obstacle_id: int) -> None:
         self.capture_and_process_image(
