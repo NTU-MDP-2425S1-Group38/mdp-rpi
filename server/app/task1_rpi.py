@@ -144,8 +144,11 @@ class Task1RPI:
             self.process_pc_receive = Thread(target=self.run_web_server)
 
             # Start Threads
+            self.logger.info("Starting PC")
             self.process_pc_receive.start()  # Receive from PC
+            self.logger.info("Starting android")
             self.process_android_receive.start()  # Receive from android
+            self.logger.info("Starting STM")
             self.process_stm_receive.start()  # Receive from stm
 
         except OSError as e:
