@@ -42,7 +42,7 @@ from utils.instructions import Instructions
 # from openapi_client.models.turn_instruction import TurnInstruction
 # from TestingScripts.Camera_Streaming_UDP.stream_server import StreamServer
 
-API_IP = "127.0.0.1"
+API_IP = "192.168.100.194"
 API_PORT = 8000
 
 obstacle_direction = {
@@ -89,7 +89,7 @@ class Task1RPI:
         The received commands and path are then queued in the respective queues
         """
 
-        url = f"http://{API_IP}:{API_PORT}/path"
+        url = f"http://{API_IP}:{API_PORT}/algo/live"
         converted_obstacles = [
             {"id": o.id, "x": o.position.x, "y": o.position.y, "d": o.direction}
             for o in obstacles
@@ -101,7 +101,11 @@ class Task1RPI:
             "server_mode": "live",
             "algo_type": "Exhaustive Astar",
         }
+
         response = requests.post(url, json=body)
+
+        print("HELLOOO")
+        print(response)
 
         # Error encountered at the server, return early
         if response.status_code != 200:
