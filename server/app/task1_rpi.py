@@ -283,6 +283,7 @@ class Task1RPI:
                     self.set_stm_stop(
                         True
                     )  # Finished stopping, can start delay to recognise image
+                    self.gamestate.capture_and_process_image()
                     print("Setting STM Stopped to true")
                 elif message_rcv[0] == "f":
                     # Finished command, send to android
