@@ -59,3 +59,7 @@ cd mdp-rpi
 cd server
 bash ./server_entry.sh
 ```
+
+```bash
+nano /etc/systemd/system/dbus-org.bluez.service
+```

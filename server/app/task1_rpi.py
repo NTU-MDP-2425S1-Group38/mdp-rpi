@@ -101,10 +101,7 @@ class Task1RPI:
             "server_mode": "live",
             "algo_type": "Exhaustive Astar",
         }
-        try:
-            response = requests.post(url, json=body)
-        except Exception as e:
-            print(e)
+        response = requests.post(url, json=body)
 
         # Error encountered at the server, return early
         if response.status_code != 200:
