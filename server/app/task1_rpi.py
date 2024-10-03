@@ -144,7 +144,7 @@ class Task1RPI:
             self.process_pc_receive = Thread(target=self.run_web_server)
 
             # Start Threads
-            # self.process_pc_receive.start()  # Receive from PC
+            self.process_pc_receive.start()  # Receive from PC
             self.process_android_receive.start()  # Receive from android
             self.process_stm_receive.start()  # Receive from stm
 
