@@ -377,10 +377,10 @@ class Task1RPI:
             print(cmd)
             print(cmd.keys)
 
-            if cmd.value in ["FORWARD", "BACKWARD"]:
-                move_direction = cmd.value.move
+            if cmd["value"] in ["FORWARD", "BACKWARD"]:
+                move_direction = cmd["value"]["move"]
                 angle = 0
-                val = cmd.value.amount
+                val = cmd["value"]["amount"]
                 self.logger.info(f"AMOUNT TO MOVE: {val}")
                 self.logger.info(f"MOVE DIRECTION: {move_direction}")
 
@@ -389,11 +389,11 @@ class Task1RPI:
                 elif move_direction == "BACKWARD":
                     flag = "t"
             else:
-                if cmd.value == "CAPTURE_IMAGE":
+                if cmd["value"] == "CAPTURE_IMAGE":
                     flag = "S"
                     count += 1
 
-                elif cmd.value in [
+                elif cmd["value"] in [
                     "FORWARD_LEFT",
                     "FORWARD_RIGHT",
                     "BACKWARD_LEFT",
