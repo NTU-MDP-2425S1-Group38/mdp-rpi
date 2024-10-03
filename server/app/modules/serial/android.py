@@ -147,7 +147,7 @@ class Android(metaclass=Singleton):
         try:
             # Default code to send a message to Android. - Bryan
             # ~ self.client_socket.send(f"{message.jsonify}\n".encode("utf-8"))
-            self.client_socket.send(f"{message.serial}\n".encode("utf-8"))
+            self.client_socket.send(f"{message}\n".encode("utf-8"))
             self.logger.info("Sent to Android: %s", str(message))
             # ~ self.logger.info("Sent to Android: %s", str(message.jsonify))
         except OSError as e:
