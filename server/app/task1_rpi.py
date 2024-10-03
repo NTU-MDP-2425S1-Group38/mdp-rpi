@@ -417,83 +417,13 @@ class Task1RPI:
 
             self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
             print("STM Command sent successfully...")
-            while not self.get_stm_stop():
-                # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
-                pass
+            # while not self.get_stm_stop():
+            #     # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
+            #     pass
 
-            time.sleep(0.75)
-            print("STM stopped, sending time of capture...")
-            self.pc.send(f"DETECT,{cmd.capture_id}")
-
-        # Original code
-        # for i, segment in enumerate(segments):
-        #     print(f"On segment {i+1} of {len(segments)}:")
-        #     self.set_stm_stop(False)  # Reset to false upon starting the new segment
-
-        #     print("SEGMENT NUMBER ", i)
-        #     i = i + 1
-
-        #     for instruction in segment.instructions:
-        #         actual_instance = instruction.actual_instance
-        #         inst = ""
-        #         flag = ""
-        #         angle = 0
-        #         val = 0
-
-        #         if hasattr(actual_instance, "move"):  # MOVE Instruction
-        #             inst = PathfindingResponseMoveInstruction(
-        #                 amount=actual_instance.amount, move=actual_instance.move
-        #             )
-        #             move_direction = inst.move.value
-        #             angle = 0
-        #             val = inst.amount
-        #             print("AMOUNT TO MOVE: ", val)
-        #             print("MOVE DIRECTION: ", move_direction)
-
-        #             # Send instructions to stm
-        #             if move_direction == "FORWARD":
-        #                 flag = "T"
-        #             elif move_direction == "BACKWARD":
-        #                 flag = "t"
-
-        #         else:
-        #             try:
-        #                 inst = TurnInstruction(actual_instance)  # TURN Instruction
-        #             except:
-        #                 inst = MiscInstruction(actual_instance)  # MISC Instruction
-
-        #             # print("Final Instruction ", inst)
-        #             if (
-        #                 isinstance(inst, MiscInstruction)
-        #                 and str(inst.value) == "CAPTURE_IMAGE"
-        #             ):
-        #                 flag = "S"  # STM to stop before recognising image and sending results to RPi
-
-        #             elif isinstance(inst, TurnInstruction):
-        #                 val = 90
-        #                 if inst.value == "FORWARD_LEFT":
-        #                     flag = "T"
-        #                     angle = -self.drive_angle
-        #                 elif inst.value == "FORWARD_RIGHT":
-        #                     flag = "T"
-        #                     angle = self.drive_angle
-        #                 elif inst.value == "BACKWARD_LEFT":
-        #                     flag = "t"
-        #                     angle = -self.drive_angle
-        #                 else:
-        #                     # BACKWARD_RIGHT
-        #                     flag = "t"
-        #                     angle = self.drive_angle
-
-        #         self.stm.send_cmd(flag, self.drive_speed, angle, val)
-        #     print("STM Command sent successfully...")
-        #     while not self.get_stm_stop():
-        #         # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
-        #         pass
-
-        #     time.sleep(0.75)
-        #     print("STM stopped, sending time of capture...")
-        #     self.pc.send(f"DETECT,{segment.image_id}")
+            # time.sleep(0.75)
+            # print("STM stopped, sending time of capture...")
+            # self.pc.send(f"DETECT,{cmd.capture_id}")
 
         print(
             f">>>>>>>>>>>> Completed in {(time.time_ns() - self.start_time) / 1e9:.2f} seconds."
