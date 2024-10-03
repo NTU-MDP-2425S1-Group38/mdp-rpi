@@ -397,6 +397,9 @@ class Task1RPI:
                 if cmd["value"] == "CAPTURE_IMAGE":
                     flag = "S"
                     count += 1
+                    self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
+                    self.stop_and_snap(cmd)
+                    continue
 
                 elif cmd["value"] in [
                     "FORWARD_LEFT",
@@ -438,6 +441,15 @@ class Task1RPI:
             print("Error in sending stitching command to PC: " + e)
 
         self.stop()
+
+    def stop_and_snap(self, cmd):
+        while not self.get_stm_stop():
+            # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
+            pass
+
+        time.sleep(0.75)
+        print("STM stopped, sending time of capture...")
+        self.pc.send(f"DETECT,{cmd["capture_id"]}")
 
     def set_last_image(self, img) -> None:
         print(f"Setting last_image as {self.last_image}")
