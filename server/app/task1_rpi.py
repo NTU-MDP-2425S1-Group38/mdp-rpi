@@ -12,6 +12,7 @@ from modules.serial.stm32 import STM
 from modules.web_server.web_server import WebServer
 from utils.logger import init_logger
 from modules.gamestate import GameState
+from multiprocessing import Process
 
 from app_types.obstacle import Obstacle
 from app_types.primatives.command import (
@@ -139,9 +140,9 @@ class Task1RPI:
             self.android.connect()
 
             print("PC Successfully connected through socket")
-            self.process_android_receive = Thread(target=self.android_receive)
-            self.process_stm_receive = Thread(target=self.stm_receive)
-            self.process_pc_receive = Thread(target=self.run_web_server)
+            self.process_android_receive = Process(target=self.android_receive)
+            self.process_stm_receive = Process(target=self.stm_receive)
+            self.process_pc_receive = Process(target=self.run_web_server)
 
             # Start Threads
             self.logger.info("Starting PC")
