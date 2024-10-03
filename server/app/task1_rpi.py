@@ -91,7 +91,7 @@ class Task1RPI:
 
         url = f"http://{API_IP}:{API_PORT}/algo/live"
         converted_obstacles = [
-            {"id": o.id, "x": o.position.x, "y": o.position.y, "d": o.direction}
+            {"id": o.id, "x": o.position.x, "y": o.position.y, "d": o.direction.value}
             for o in obstacles
         ]
         print("algo")
@@ -102,6 +102,8 @@ class Task1RPI:
             "algo_type": "Exhaustive Astar",
         }
 
+        print(body)
+
         response = requests.post(url, json=body)
 
         print("HELLOOO")
@@ -109,9 +111,7 @@ class Task1RPI:
 
         # Error encountered at the server, return early
         if response.status_code != 200:
-            self.logger.error(
-                "Something went wrong when requesting path from Algo API."
-            )
+            print("Something went wrong when requesting path from Algo API.")
             return
 
         # Parse response
