@@ -370,14 +370,14 @@ class Task1RPI:
         )
         count = 0
         while cmd := commands.pop():
-            self.logger.info(f"Current command: {cmd.model_dump()}")
+            self.logger.info(f"Current command: {cmd}")
             angle = 0
             val = 0
 
-            if isinstance(cmd.value, MoveInstruction):
-                move_direction = cmd.move.value
+            if cmd.value in ["FORWARD", "BACKWARD"]:
+                move_direction = cmd.value.move
                 angle = 0
-                val = cmd.amount
+                val = cmd.value.amount
                 self.logger.info(f"AMOUNT TO MOVE: {val}")
                 self.logger.info(f"MOVE DIRECTION: {move_direction}")
 
@@ -386,14 +386,16 @@ class Task1RPI:
                 elif move_direction == "BACKWARD":
                     flag = "t"
             else:
-                if (
-                    isinstance(cmd.value, CommandInstruction)
-                    and cmd.value == "CAPTURE_IMAGE"
-                ):
+                if cmd.value == "CAPTURE_IMAGE":
                     flag = "S"
                     count += 1
 
-                elif isinstance(cmd.value, TurnInstruction):
+                elif cmd.value in [
+                    "FORWARD_LEFT",
+                    "FORWARD_RIGHT",
+                    "BACKWARD_LEFT",
+                    "BACKWARD_RIGHT",
+                ]:
                     val = 90
                     if cmd.value == "FORWARD_LEFT":
                         flag = "T"
@@ -404,6 +406,9 @@ class Task1RPI:
                     elif cmd.value == "BACKWARD_LEFT":
                         flag = "t"
                         angle = -self.drive_angle
+                    elif cmd.value == "BACKWARD_RIGHT":
+                        flag = "t"
+                        angle = self.drive_angle
 
             self.stm.send_cmd(flag, self.drive_speed, angle, val)
             print("STM Command sent successfully...")
