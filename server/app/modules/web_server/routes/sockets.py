@@ -19,9 +19,6 @@ async def connect(websocket: WebSocket):
     logging.getLogger().info("New WS connection")
     await websocket.accept()
     await ConnectionManager().connect(websocket)
-    # Initialize GameState and run the required task
-    game_state = GameState()
-    game_state._run_task_checklist_a5()
     await connection_handler(websocket)
 
 

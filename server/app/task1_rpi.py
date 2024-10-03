@@ -11,6 +11,7 @@ from modules.serial.android import Android
 from modules.serial.stm32 import STM
 from modules.web_server.web_server import WebServer
 from utils.logger import init_logger
+from modules.gamestate import GameState
 
 from app_types.obstacle import Obstacle
 from app_types.primatives.command import (
@@ -57,7 +58,7 @@ class Task1RPI:
     def __init__(self, config):
         self.config = config
         self.logger = logging.getLogger("Task1RPI")
-
+        self.gamestate = GameState()
         self.obstacle_dict = {}  # Obstacle Dict
         self.robot = None  # Robot
         self.prev_image = None
@@ -140,7 +141,7 @@ class Task1RPI:
             print("PC Successfully connected through socket")
             self.process_android_receive = Thread(target=self.android_receive)
             self.process_stm_receive = Thread(target=self.stm_receive)
-            # self.process_pc_receive = Thread(target=self.pc_receive)
+            self.process_pc_receive = Thread(target=self.run_web_server)
 
             # Start Threads
             # self.process_pc_receive.start()  # Receive from PC
@@ -449,7 +450,7 @@ class Task1RPI:
 
         time.sleep(0.75)
         print("STM stopped, sending time of capture...")
-        self.pc.send(f"DETECT,{cmd["capture_id"]}")
+        self.gamestate.capture_and_process_image()
 
     def set_last_image(self, img) -> None:
         print(f"Setting last_image as {self.last_image}")
