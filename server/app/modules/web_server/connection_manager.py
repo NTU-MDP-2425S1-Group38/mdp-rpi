@@ -52,13 +52,25 @@ class ConnectionManager(metaclass=Singleton):
     PRIVATE METHODS
     """
 
-    def _run_async(self, coro: Coroutine):
-        self.logger.info("Attempting to run async coroutine")
-        loop = asyncio.get_event_loop()
+    # def _run_async(self, coro: Coroutine):
+    #     loop = asyncio.get_event_loop()
+    #     if loop.is_running():
+    #         return asyncio.create_task(coro)
+    #     else:
+    #         return loop.run_until_complete(coro)
+
+    def _run_async(self, coro):
+        try:
+            self.logger.info("Attempting to run async coroutine")
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
         if loop.is_running():
-            return asyncio.create_task(coro)
+            asyncio.ensure_future(coro, loop=loop)
         else:
-            return loop.run_until_complete(coro)
+            loop.run_until_complete(coro)
 
     """
     ALGO RELATED STUFF
