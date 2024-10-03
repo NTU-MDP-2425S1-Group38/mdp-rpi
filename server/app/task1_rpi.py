@@ -369,10 +369,13 @@ class Task1RPI:
             f"! Request completed in {(time.time_ns() - self.start_time) / 1e9:.3f}s."
         )
         count = 0
-        while cmd := commands.pop():
+        while cmd := commands.pop(0):
             self.logger.info(f"Current command: {cmd}")
             angle = 0
             val = 0
+
+            print(cmd)
+            print(cmd.keys)
 
             if cmd.value in ["FORWARD", "BACKWARD"]:
                 move_direction = cmd.value.move
