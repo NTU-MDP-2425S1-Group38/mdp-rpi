@@ -151,7 +151,7 @@ class Task1RPI:
         except OSError as e:
             print("Initialization failed: ", e)
 
-    def run_web_server(ready_event) -> None:
+    def run_web_server() -> None:
         load_dotenv()
         init_logger()
         web_server = WebServer().get_web_server()
@@ -162,7 +162,6 @@ class Task1RPI:
             log_level="debug",
             log_config=None,
         )
-        ready_event.set()  # Signal that the web server is ready
 
     def pc_receive(self) -> None:
         while True:
