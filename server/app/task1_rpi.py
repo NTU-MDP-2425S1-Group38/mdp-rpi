@@ -405,16 +405,16 @@ class Task1RPI:
                     "BACKWARD_RIGHT",
                 ]:
                     val = 90
-                    if cmd.value == "FORWARD_LEFT":
+                    if cmd["value"] == "FORWARD_LEFT":
                         flag = "T"
                         angle = -self.drive_angle
-                    elif cmd.value == "FORWARD_RIGHT":
+                    elif cmd["value"] == "FORWARD_RIGHT":
                         flag = "T"
                         angle = self.drive_angle
-                    elif cmd.value == "BACKWARD_LEFT":
+                    elif cmd["value"] == "BACKWARD_LEFT":
                         flag = "t"
                         angle = -self.drive_angle
-                    elif cmd.value == "BACKWARD_RIGHT":
+                    elif cmd["value"] == "BACKWARD_RIGHT":
                         flag = "t"
                         angle = self.drive_angle
 
