@@ -356,7 +356,7 @@ class Task1RPI:
 
         self.start_time = time.time_ns()
         print("! Sending request to API...")
-        commands = self.request_algo(obstacles)["commands"]
+        commands = json.loads(self.request_algo(obstacles))["commands"]
         # try:
         #     # response = self.pathfinding_api.pathfinding_post(pathfindingRequest)
         #     response = self.gamestate.set_obstacles(obstacles)
