@@ -1,23 +1,27 @@
+import json
 import os
 import time
 from multiprocessing import Manager
 from threading import Thread
-
+import logging
+import requests
+import uvicorn
+from dotenv import load_dotenv
 from modules.serial.android import Android
 from modules.serial.stm32 import STM
-from server.app.app_types.obstacle import Obstacle
-from server.app.app_types.primatives.command import (
+from modules.web_server.web_server import WebServer
+from utils.logger import init_logger
+from modules.gamestate import GameState
+from multiprocessing import Process
+
+from app_types.obstacle import Obstacle
+from app_types.primatives.command import (
     CommandInstruction,
     MoveInstruction,
     TurnInstruction,
 )
-from server.app.app_types.primatives.position import Position
-from server.app.utils.instructions import Instructions
-from dotenv import load_dotenv
-from utils.logger import init_logger
-from modules.web_server.web_server import WebServer
-import uvicorn
-
+from app_types.primatives.position import Position
+from utils.instructions import Instructions
 
 # # To be explored
 # from Communication.pc import PC
@@ -40,11 +44,22 @@ import uvicorn
 # from openapi_client.models.turn_instruction import TurnInstruction
 # from TestingScripts.Camera_Streaming_UDP.stream_server import StreamServer
 
+API_IP = "192.168.100.194"
+API_PORT = 8000
+
+obstacle_direction = {
+    "NORTH": 1,
+    "SOUTH": 2,
+    "EAST": 3,
+    "WEST": 4,
+}
+
 
 class Task1RPI:
     def __init__(self, config):
         self.config = config
-
+        self.logger = logging.getLogger("Task1RPI")
+        self.gamestate = GameState()
         self.obstacle_dict = {}  # Obstacle Dict
         self.robot = None  # Robot
         self.prev_image = None
@@ -71,66 +86,76 @@ class Task1RPI:
         self.drive_speed = 40 if config.is_outdoors else 55
         self.drive_angle = 25
 
-    def request_algo(self, *obstacles: Obstacle):
+    def request_algo(self, obstacles: list[Obstacle]):
         """
         Requests for a series of commands and the path from the Algo API.
         The received commands and path are then queued in the respective queues
         """
 
-        url = f"http://{API_IP}:{API_PORT}/path"
+        url = f"http://{API_IP}:{API_PORT}/algo/live"
+        converted_obstacles = [
+            {"id": o.id, "x": o.position.x, "y": o.position.y, "d": o.direction.value}
+            for o in obstacles
+        ]
+        print("algo")
+        body = {
+            "cat": "obstacles",
+            "value": {"obstacles": converted_obstacles, "mode": 0},
+            "server_mode": "live",
+            "algo_type": "Exhaustive Astar",
+        }
+
+        print(body)
+
         response = requests.post(url, json=body)
+
+        print("HELLOOO")
+        print(response.content)
 
         # Error encountered at the server, return early
         if response.status_code != 200:
-            self.logger.error(
-                "Something went wrong when requesting path from Algo API."
-            )
+            print("Something went wrong when requesting path from Algo API.")
             return
 
-        # Parse response
-        result = json.loads(response.content)["data"]
-        commands = result["commands"]
-        path = result["path"]
+        return response.content
+
+        # result = json.loads(response.content)["data"]
+        # commands = result["commands"]
+        # path = result["path"]
 
         # Log commands received
-        self.logger.debug(f"Commands received from API: {commands}")
+        # self.logger.debug(f"Commands received from API: {commands}")
 
-        # Put commands and paths into respective queues
-        self.clear_queues()
-        for c in commands:
-            self.command_queue.put(c)
-        for p in path[
-            1:
-        ]:  # ignore first element as it is the starting position of the robot
-            self.path_queue.put(p)
-
-        self.logger.info("Commands and path received Algo API. Robot is ready to move.")
+        # self.logger.info("Commands and path received Algo API. Robot is ready to move.")
 
     def initialize(self):
         try:
             # let stream server start before calling other sockets.
-            self.process_pc_stream = Thread(target=self.stream_start)
-            self.process_pc_stream.start()  # Start the Stream
-            time.sleep(0.1)
+            # self.process_pc_stream = Thread(target=self.stream_start)
+            # self.process_pc_stream.start()  # Start the Stream
+            # time.sleep(0.1)
 
             self.stm.connect()
-            self.pc.connect()
+            # self.pc.connect()
             self.android.connect()
 
             print("PC Successfully connected through socket")
-            self.process_android_receive = Thread(target=self.android_receive)
-            self.process_stm_receive = Thread(target=self.stm_receive)
-            self.process_pc_receive = Thread(target=self.pc_receive)
+            self.process_android_receive = Process(target=self.android_receive)
+            self.process_stm_receive = Process(target=self.stm_receive)
+            self.process_pc_receive = Process(target=self.run_web_server)
 
             # Start Threads
+            self.logger.info("Starting PC")
             self.process_pc_receive.start()  # Receive from PC
+            self.logger.info("Starting android")
             self.process_android_receive.start()  # Receive from android
-            self.process_stm_receive.start()  # Receive from PC
+            self.logger.info("Starting STM")
+            self.process_stm_receive.start()  # Receive from stm
 
         except OSError as e:
             print("Initialization failed: ", e)
 
-    def run_web_server(ready_event) -> None:
+    def run_web_server(self) -> None:
         load_dotenv()
         init_logger()
         web_server = WebServer().get_web_server()
@@ -141,7 +166,6 @@ class Task1RPI:
             log_level="debug",
             log_config=None,
         )
-        ready_event.set()  # Signal that the web server is ready
 
     def pc_receive(self) -> None:
         while True:
@@ -171,21 +195,6 @@ class Task1RPI:
             except OSError as e:
                 print(f"Error in receiving data: {e}")
                 break
-
-    # def stream_start(self):
-    #     StreamServer().start(
-    #         framerate=15, quality=45, is_outdoors=self.config.is_outdoors
-    #     )
-
-    #     if id is not None:
-    #         return Object(
-    #             direction=direction,
-    #             south_west=south_west,
-    #             north_east=north_east,
-    #             image_id=id,
-    #         )
-
-    #     return Object(direction=direction, south_west=south_west, north_east=north_east)
 
     # Done (Android)
     def android_receive(self) -> None:
@@ -224,8 +233,8 @@ class Task1RPI:
                         else:
                             newObstacle = Obstacle(
                                 id=id,
-                                position=Position(int(x), int(y)),
-                                direction=dir,
+                                position=Position(x=int(x), y=int(y)),
+                                direction=obstacle_direction[dir],
                             )
                             self.obstacle_dict[id] = newObstacle
 
@@ -274,6 +283,7 @@ class Task1RPI:
                     self.set_stm_stop(
                         True
                     )  # Finished stopping, can start delay to recognise image
+                    self.gamestate.capture_and_process_image()
                     print("Setting STM Stopped to true")
                 elif message_rcv[0] == "f":
                     # Finished command, send to android
@@ -348,31 +358,38 @@ class Task1RPI:
         #     obstacles=self.obstacle_dict.values(), robot=self.robot, verbose=False
         # )
         obstacles = list(self.obstacle_dict.values())
-        response: Instructions = None
+        # response: Instructions = None
 
         self.start_time = time.time_ns()
         print("! Sending request to API...")
-        try:
-            # response = self.pathfinding_api.pathfinding_post(pathfindingRequest)
-            response = self.gamestate.set_obstacles(obstacles)
-        except:
-            print("Server failed, try again.")
-            return
+        commands = json.loads(self.request_algo(obstacles))["commands"]
+        # try:
+        #     # response = self.pathfinding_api.pathfinding_post(pathfindingRequest)
+        #     response = self.gamestate.set_obstacles(obstacles)
+        # except:
+        #     print("Server failed, try again.")
+        #     return
 
         print(
             f"! Request completed in {(time.time_ns() - self.start_time) / 1e9:.3f}s."
         )
-        commands = response.commands
         count = 0
-        while cmd := commands.pop():
-            self.logger.info(f"Current command: {cmd.model_dump()}")
+        while len(commands) > 0:
+            cmd = commands.pop(0)
+            self.logger.info(f"Current command: {cmd}")
             angle = 0
+            flag = ""
             val = 0
 
-            if isinstance(cmd.value, MoveInstruction):
-                move_direction = cmd.move.value
+            print(cmd)
+
+            if isinstance(cmd["value"], dict) and cmd["value"]["move"] in [
+                "FORWARD",
+                "BACKWARD",
+            ]:
+                move_direction = cmd["value"]["move"]
                 angle = 0
-                val = cmd.amount
+                val = cmd["value"]["amount"]
                 self.logger.info(f"AMOUNT TO MOVE: {val}")
                 self.logger.info(f"MOVE DIRECTION: {move_direction}")
 
@@ -381,104 +398,42 @@ class Task1RPI:
                 elif move_direction == "BACKWARD":
                     flag = "t"
             else:
-                if (
-                    isinstance(cmd.value, CommandInstruction)
-                    and cmd.value == "CAPTURE_IMAGE"
-                ):
+                if cmd["value"] == "CAPTURE_IMAGE":
                     flag = "S"
                     count += 1
+                    self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
+                    # self.stop_and_snap(cmd)
+                    continue
 
-                elif isinstance(cmd.value, TurnInstruction):
+                elif cmd["value"] in [
+                    "FORWARD_LEFT",
+                    "FORWARD_RIGHT",
+                    "BACKWARD_LEFT",
+                    "BACKWARD_RIGHT",
+                ]:
                     val = 90
-                    if cmd.value == "FORWARD_LEFT":
+                    if cmd["value"] == "FORWARD_LEFT":
                         flag = "T"
                         angle = -self.drive_angle
-                    elif cmd.value == "FORWARD_RIGHT":
+                    elif cmd["value"] == "FORWARD_RIGHT":
                         flag = "T"
                         angle = self.drive_angle
-                    elif cmd.value == "BACKWARD_LEFT":
+                    elif cmd["value"] == "BACKWARD_LEFT":
                         flag = "t"
                         angle = -self.drive_angle
+                    elif cmd["value"] == "BACKWARD_RIGHT":
+                        flag = "t"
+                        angle = self.drive_angle
 
-            self.stm.send_cmd(flag, self.drive_speed, angle, val)
+            self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
             print("STM Command sent successfully...")
-            while not self.get_stm_stop():
-                # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
-                pass
+            # while not self.get_stm_stop():
+            #     # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
+            #     pass
 
-            time.sleep(0.75)
-            print("STM stopped, sending time of capture...")
-            self.pc.send(f"DETECT,{cmd.capture_id}")
-
-        # Original code
-        # for i, segment in enumerate(segments):
-        #     print(f"On segment {i+1} of {len(segments)}:")
-        #     self.set_stm_stop(False)  # Reset to false upon starting the new segment
-
-        #     print("SEGMENT NUMBER ", i)
-        #     i = i + 1
-
-        #     for instruction in segment.instructions:
-        #         actual_instance = instruction.actual_instance
-        #         inst = ""
-        #         flag = ""
-        #         angle = 0
-        #         val = 0
-
-        #         if hasattr(actual_instance, "move"):  # MOVE Instruction
-        #             inst = PathfindingResponseMoveInstruction(
-        #                 amount=actual_instance.amount, move=actual_instance.move
-        #             )
-        #             move_direction = inst.move.value
-        #             angle = 0
-        #             val = inst.amount
-        #             print("AMOUNT TO MOVE: ", val)
-        #             print("MOVE DIRECTION: ", move_direction)
-
-        #             # Send instructions to stm
-        #             if move_direction == "FORWARD":
-        #                 flag = "T"
-        #             elif move_direction == "BACKWARD":
-        #                 flag = "t"
-
-        #         else:
-        #             try:
-        #                 inst = TurnInstruction(actual_instance)  # TURN Instruction
-        #             except:
-        #                 inst = MiscInstruction(actual_instance)  # MISC Instruction
-
-        #             # print("Final Instruction ", inst)
-        #             if (
-        #                 isinstance(inst, MiscInstruction)
-        #                 and str(inst.value) == "CAPTURE_IMAGE"
-        #             ):
-        #                 flag = "S"  # STM to stop before recognising image and sending results to RPi
-
-        #             elif isinstance(inst, TurnInstruction):
-        #                 val = 90
-        #                 if inst.value == "FORWARD_LEFT":
-        #                     flag = "T"
-        #                     angle = -self.drive_angle
-        #                 elif inst.value == "FORWARD_RIGHT":
-        #                     flag = "T"
-        #                     angle = self.drive_angle
-        #                 elif inst.value == "BACKWARD_LEFT":
-        #                     flag = "t"
-        #                     angle = -self.drive_angle
-        #                 else:
-        #                     # BACKWARD_RIGHT
-        #                     flag = "t"
-        #                     angle = self.drive_angle
-
-        #         self.stm.send_cmd(flag, self.drive_speed, angle, val)
-        #     print("STM Command sent successfully...")
-        #     while not self.get_stm_stop():
-        #         # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
-        #         pass
-
-        #     time.sleep(0.75)
-        #     print("STM stopped, sending time of capture...")
-        #     self.pc.send(f"DETECT,{segment.image_id}")
+            # time.sleep(0.75)
+            # print("STM stopped, sending time of capture...")
+            # self.pc.send(f"DETECT,{cmd.capture_id}")
 
         print(
             f">>>>>>>>>>>> Completed in {(time.time_ns() - self.start_time) / 1e9:.2f} seconds."
@@ -490,6 +445,15 @@ class Task1RPI:
             print("Error in sending stitching command to PC: " + e)
 
         self.stop()
+
+    def stop_and_snap(self, cmd):
+        while not self.get_stm_stop():
+            # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
+            pass
+
+        time.sleep(0.75)
+        print("STM stopped, sending time of capture...")
+        self.gamestate.capture_and_process_image()
 
     def set_last_image(self, img) -> None:
         print(f"Setting last_image as {self.last_image}")

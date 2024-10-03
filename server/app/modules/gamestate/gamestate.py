@@ -15,7 +15,8 @@ from app_types.primatives.command import (
 )
 from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
-from modules.serial import STM
+from modules.serial import STM, Android
+from modules.serial.android import AndroidMessage
 from utils.instructions import Instructions
 from modules.camera.camera import Camera
 
@@ -41,7 +42,6 @@ class GameState(metaclass=Singleton):
         self.connection_manager = ConnectionManager()
 
         self.logger.info("Initialising STM connector")
-        self.stm = STM()
 
         self.is_outdoors = is_outdoors
 
@@ -132,18 +132,15 @@ class GameState(metaclass=Singleton):
         # Update label internally
         self.obstacles[obstacle_index].label = cv_response.label
 
-        # TODO update android of updated label
+        # DONE update android of updated label
+        self.android.send(
+            AndroidMessage("TARGET", f"{obstacle_index},{cv_response.label.value}")
+        )
 
     def capture_and_update_label(self, obstacle_id: int) -> None:
         self.capture_and_process_image(
             lambda res: self._update_obstacle_label_after_cv(obstacle_id, res)
         )
-
-    def stitch_images(self):
-        """
-        Method to stitch images together.
-        """
-        pass
 
     """
     Algo methods

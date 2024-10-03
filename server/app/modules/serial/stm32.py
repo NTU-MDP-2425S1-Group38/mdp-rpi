@@ -12,15 +12,12 @@ import serial
 
 
 class STM(metaclass=Singleton):
-    # android: Android
-
     def __init__(self):
         """
         Constructor for STMLink.
         """
         self.serial_link = None
         self.received = []
-        # self.gamestate = GameState()
 
     def connect(self):
         """Connect to STM32 using serial UART connection, given the serial port and the baud rate"""

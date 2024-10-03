@@ -7,8 +7,13 @@ from uuid import uuid4
 
 from fastapi import WebSocket
 
-from app_types.data.slave_models import SlaveObstacle, SlaveWorkRequest, SlaveWorkRequestType, \
-    SlaveWorkRequestPayloadAlgo, SlaveWorkRequestPayloadImageRecognition
+from app_types.data.slave_models import (
+    SlaveObstacle,
+    SlaveWorkRequest,
+    SlaveWorkRequestType,
+    SlaveWorkRequestPayloadAlgo,
+    SlaveWorkRequestPayloadImageRecognition,
+)
 from app_types.obstacle import Obstacle
 from app_types.primatives.command import Command, AlgoCommandResponse
 from app_types.primatives.cv import CvResponse
@@ -18,14 +23,17 @@ from pydantic import ValidationError
 
 
 class ConnectionManager(metaclass=Singleton):
-
     connections: List[WebSocket] = []
     observers: List[WebSocket] = []
     logger = logging.getLogger("Connection Manager")
-    pending_responses: Dict[str, Callable[[Union[AlgoCommandResponse, CvResponse]],None]] = {}
+    pending_responses: Dict[
+        str, Callable[[Union[AlgoCommandResponse, CvResponse]], None]
+    ] = {}
 
     async def connect(self, websocket: WebSocket) -> None:
-        logging.getLogger().info("Adding websocket to all connections in ConnectionManager")
+        logging.getLogger().info(
+            "Adding websocket to all connections in ConnectionManager"
+        )
         self.connections.append(websocket)
 
     async def observer(self, websocket: WebSocket) -> None:
@@ -36,7 +44,7 @@ class ConnectionManager(metaclass=Singleton):
         logging.getLogger().info("Removing websocket connection from ConnectionManager")
         self.connections.remove(websocket)
 
-    def remove_observer(self, websocket:WebSocket) -> None:
+    def remove_observer(self, websocket: WebSocket) -> None:
         logging.getLogger().info("Removing websocket observer from ConnectionManager")
         self.observers.remove(websocket)
 
@@ -44,21 +52,33 @@ class ConnectionManager(metaclass=Singleton):
     PRIVATE METHODS
     """
 
-    def _run_async(self, coro: Coroutine):
-        self.logger.info("Attempting to run async coroutine")
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            return asyncio.create_task(coro)
-        else:
-            return loop.run_until_complete(coro)
+    # def _run_async(self, coro: Coroutine):
+    #     loop = asyncio.get_event_loop()
+    #     if loop.is_running():
+    #         return asyncio.create_task(coro)
+    #     else:
+    #         return loop.run_until_complete(coro)
 
+    def _run_async(self, coro):
+        try:
+            self.logger.info("Attempting to run async coroutine")
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        if loop.is_running():
+            asyncio.ensure_future(coro, loop=loop)
+        else:
+            loop.run_until_complete(coro)
 
     """
     ALGO RELATED STUFF
     """
 
-    async def _broadcast_algo_req(self, req_id:str, obstacles: List[Obstacle]) -> List[Command]:
-
+    async def _broadcast_algo_req(
+        self, req_id: str, obstacles: List[Obstacle]
+    ) -> List[Command]:
         if not self.connections:
             self.logger.error("No slave connections available to process algo!")
             return []
@@ -66,23 +86,29 @@ class ConnectionManager(metaclass=Singleton):
         req = SlaveWorkRequest(
             id=req_id,
             type=SlaveWorkRequestType.Algorithm,
-            payload=SlaveWorkRequestPayloadAlgo(obstacles=[SlaveObstacle(**i.model_dump()) for i in obstacles])
+            payload=SlaveWorkRequestPayloadAlgo(
+                obstacles=[SlaveObstacle(**i.model_dump()) for i in obstacles]
+            ),
         ).model_dump_json()
 
         tasks = [asyncio.create_task(c.send_text(req)) for c in self.connections]
 
         await asyncio.gather(*tasks)
 
-    def handle_algo_response_callback(self, response:AlgoCommandResponse) -> None:
+    def handle_algo_response_callback(self, response: AlgoCommandResponse) -> None:
         self.logger.info(f"Activating algo callback for {response.id}")
         if response.id in self.pending_responses.keys():
             self.logger.info(f"Running callback for {response.id}")
             self.pending_responses[response.id](response)
             self.pending_responses.pop(response.id, None)
             return
-        self.logger.info(f"Matching callback no longer found for {response.id}! Has it been executed?")
+        self.logger.info(
+            f"Matching callback no longer found for {response.id}! Has it been executed?"
+        )
 
-    def slave_request_algo(self, obstacles: List[Obstacle], callback: Callable[[AlgoCommandResponse], None]) -> None:
+    def slave_request_algo(
+        self, obstacles: List[Obstacle], callback: Callable[[AlgoCommandResponse], None]
+    ) -> None:
         self.logger.info("Sending Algo request to slaves!")
         req_id = str(uuid4())
         self.pending_responses[req_id] = callback
@@ -103,24 +129,27 @@ class ConnectionManager(metaclass=Singleton):
         req = SlaveWorkRequest(
             id=req_id,
             type=SlaveWorkRequestType.ImageRecognition,
-            payload=SlaveWorkRequestPayloadImageRecognition(image=image)
+            payload=SlaveWorkRequestPayloadImageRecognition(image=image),
         ).model_dump_json()
 
         tasks = [asyncio.create_task(c.send_text(req)) for c in self.connections]
-        
+
         await asyncio.gather(*tasks)
 
-    def handle_cv_response_callback(self, response:CvResponse) -> None:
+    def handle_cv_response_callback(self, response: CvResponse) -> None:
         self.logger.info(f"Activating CV callback for {response.id}")
         if response.id in self.pending_responses.keys():
             self.logger.info(f"Running callback for {response.id}")
             self.pending_responses[response.id](response)
             self.pending_responses.pop(response.id, None)
             return
-        self.logger.info(f"Matching callback no longer found for {response.id}! Has it been executed?")
+        self.logger.info(
+            f"Matching callback no longer found for {response.id}! Has it been executed?"
+        )
 
-
-    def slave_request_cv(self, image: str, callback: Callable[[CvResponse], None]) -> None:
+    def slave_request_cv(
+        self, image: str, callback: Callable[[CvResponse], None]
+    ) -> None:
         """
         :param image: base64 string of image
         :param callback: callback function that takes `CvResponse` as the only arg, and returns None.
@@ -130,5 +159,3 @@ class ConnectionManager(metaclass=Singleton):
         req_id = str(uuid4())
         self.pending_responses[req_id] = callback
         self._run_async(self._broadcast_cv_req(req_id, image))
-
-

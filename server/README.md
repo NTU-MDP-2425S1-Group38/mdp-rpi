@@ -42,6 +42,8 @@ Backward-Left | t,10,-25,90
 For Bluetooth:
 https://bluedot.readthedocs.io/en/latest/pairpiandroid.html
 
+**During start-up, always ensure bluetooth between android & RPI is functional.**
+
 commands:
 sudo chmod o+rw /var/run/sdp
 sudo apt install libbluetooth-dev
@@ -56,4 +58,8 @@ sudo bash #Enter password
 cd mdp-rpi
 cd server
 bash ./server_entry.sh
+```
+
+```bash
+nano /etc/systemd/system/dbus-org.bluez.service
 ```

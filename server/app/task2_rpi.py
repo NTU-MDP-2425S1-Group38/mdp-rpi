@@ -6,10 +6,10 @@ from multiprocessing import Manager
 from threading import Thread, Lock
 
 sys.path.insert(1, "/home/raspberrypi/Desktop/MDP Group 14 Repo/SC2079/RPi")
-from Communication.android import Android
-from Communication.pc import PC
-from Communication.stm import STM
-from TestingScripts.Camera_Streaming_UDP.stream_server import StreamServer
+from modules.serial.android import Android
+from modules.serial.stm32 import STM
+# from Communication.pc import PC
+# from TestingScripts.Camera_Streaming_UDP.stream_server import StreamServer
 
 
 def sin_deg(angle):

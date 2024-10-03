@@ -22,4 +22,4 @@ else
   echo "No active USB ports found."
 fi
 
-python /home/user/mdp-rpi/server/app/main.py
+python /home/user/mdp-rpi/server/app/task_loader_rpi.py
