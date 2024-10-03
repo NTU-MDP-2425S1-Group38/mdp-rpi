@@ -107,15 +107,14 @@ class Task1RPI:
         response = requests.post(url, json=body)
 
         print("HELLOOO")
-        print(response)
+        print(response.content)
 
         # Error encountered at the server, return early
         if response.status_code != 200:
             print("Something went wrong when requesting path from Algo API.")
             return
 
-        # Parse response
-        print(response)
+        return response.content
 
         # result = json.loads(response.content)["data"]
         # commands = result["commands"]
@@ -191,21 +190,6 @@ class Task1RPI:
             except OSError as e:
                 print(f"Error in receiving data: {e}")
                 break
-
-    # def stream_start(self):
-    #     StreamServer().start(
-    #         framerate=15, quality=45, is_outdoors=self.config.is_outdoors
-    #     )
-
-    #     if id is not None:
-    #         return Object(
-    #             direction=direction,
-    #             south_west=south_west,
-    #             north_east=north_east,
-    #             image_id=id,
-    #         )
-
-    #     return Object(direction=direction, south_west=south_west, north_east=north_east)
 
     # Done (Android)
     def android_receive(self) -> None:
@@ -368,11 +352,11 @@ class Task1RPI:
         #     obstacles=self.obstacle_dict.values(), robot=self.robot, verbose=False
         # )
         obstacles = list(self.obstacle_dict.values())
-        response: Instructions = None
+        # response: Instructions = None
 
         self.start_time = time.time_ns()
         print("! Sending request to API...")
-        self.request_algo(obstacles)
+        commands = self.request_algo(obstacles)["commands"]
         # try:
         #     # response = self.pathfinding_api.pathfinding_post(pathfindingRequest)
         #     response = self.gamestate.set_obstacles(obstacles)
@@ -383,7 +367,6 @@ class Task1RPI:
         print(
             f"! Request completed in {(time.time_ns() - self.start_time) / 1e9:.3f}s."
         )
-        commands = response.commands
         count = 0
         while cmd := commands.pop():
             self.logger.info(f"Current command: {cmd.model_dump()}")
