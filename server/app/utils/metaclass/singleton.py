@@ -26,4 +26,3 @@ class Singleton(type):
             else:
                 logging.getLogger().info(f"Using existing instance of {cls.__name__}")
         return Singleton._instances[cls]
-    

@@ -25,3 +25,9 @@ async def capture():
     logger.info("Received capture command")
     GameState().capture_and_process_image()
     return "Done"
+
+
+@rest_endpoints.post("/task/2")
+async def start_task_two():
+    GameState().run(2)
+

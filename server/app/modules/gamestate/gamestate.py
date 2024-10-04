@@ -38,6 +38,7 @@ class GameState(metaclass=Singleton):
     instruction: Instructions = Instructions()
 
     def __init__(self, is_outdoors: bool = False):
+        self.android = None
         self.logger.info("Initialising connection manager")
         self.connection_manager = ConnectionManager()
 
@@ -354,7 +355,6 @@ class GameState(metaclass=Singleton):
         :param task: Literal[1, 2] corresponding to which task
         :return: None
         """
-        self._run_task_checklist_a5()
 
         if task == 1:
             self._run_task_one()
