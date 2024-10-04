@@ -119,7 +119,7 @@ class ConnectionManager(metaclass=Singleton):
     CV RELATED STUFF
     """
 
-    async def _broadcast_cv_req(self, req_id: str, image: str) -> None:
+    async def _broadcast_cv_req(self, req_id: str, image: str, ignore_bullseye: bool) -> None:
         self.logger.info("Entering _broadcast_cv_req")
 
         if not self.connections:
@@ -130,6 +130,7 @@ class ConnectionManager(metaclass=Singleton):
             id=req_id,
             type=SlaveWorkRequestType.ImageRecognition,
             payload=SlaveWorkRequestPayloadImageRecognition(image=image),
+            ignore_bullseye=ignore_bullseye
         ).model_dump_json()
 
         tasks = [asyncio.create_task(c.send_text(req)) for c in self.connections]
@@ -148,14 +149,15 @@ class ConnectionManager(metaclass=Singleton):
         )
 
     def slave_request_cv(
-        self, image: str, callback: Callable[[CvResponse], None]
+        self, image: str, callback: Callable[[CvResponse], None], ignore_bullseye:bool = False
     ) -> None:
         """
         :param image: base64 string of image
         :param callback: callback function that takes `CvResponse` as the only arg, and returns None.
+        :param ignore_bullseye: Specify if bullseye detections should be ignored.
         :return: None
         """
         self.logger.info("Sending CV request to slaves!")
         req_id = str(uuid4())
         self.pending_responses[req_id] = callback
-        self._run_async(self._broadcast_cv_req(req_id, image))
+        self._run_async(self._broadcast_cv_req(req_id, image, ignore_bullseye))

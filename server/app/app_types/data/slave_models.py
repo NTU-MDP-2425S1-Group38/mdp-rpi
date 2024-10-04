@@ -35,4 +35,5 @@ class SlaveWorkRequest(BaseModel):
     id:str = Field(default="")
     type: SlaveWorkRequestType
     payload: Union[SlaveWorkRequestPayloadAlgo, SlaveWorkRequestPayloadImageRecognition]
+    ignore_bullseye:bool = Field(default=False)
 

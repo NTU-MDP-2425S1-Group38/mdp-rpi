@@ -1,7 +1,7 @@
 from utils.metaclass.singleton import Singleton
 from .configuration import BAUD_RATE, SERIAL_PORT
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 # from modules.gamestate import GameState
 import time
@@ -9,6 +9,8 @@ import time
 # from modules.serial.android import Android
 
 import serial
+
+from .stm_commands import StmCommand
 
 
 class STM(metaclass=Singleton):
@@ -38,6 +40,15 @@ class STM(metaclass=Singleton):
         """
         self.serial_link.write(bytes(message, "utf-8"))
         print("Sent to STM32:", str(message).rstrip())
+
+    def send_stm_command(self, *stm_commands:StmCommand) -> None:
+        """
+        Function to take StmCommand super classes
+        :param stm_commands: Commands to be sent to the STM
+        :return:
+        """
+        for c in stm_commands:
+            self.send(c.to_serial())
 
     def send_cmd(self, flag, speed, angle, val):
         """Send command and wait for acknowledge."""

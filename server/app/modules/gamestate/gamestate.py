@@ -17,6 +17,7 @@ from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
 from modules.serial import STM, Android
 from modules.serial.android import AndroidMessage
+from modules.tasks.task_two import TaskTwoRunner
 from utils.instructions import Instructions
 from modules.camera.camera import Camera
 
@@ -41,6 +42,7 @@ class GameState(metaclass=Singleton):
         self.android = None
         self.logger.info("Initialising connection manager")
         self.connection_manager = ConnectionManager()
+        self.task_two_helper = TaskTwoRunner()
 
         self.logger.info("Initialising STM connector")
 
@@ -342,7 +344,7 @@ class GameState(metaclass=Singleton):
     """
 
     def _run_task_two(self) -> None:
-        pass
+        self.task_two_helper.run()
 
 
     """
