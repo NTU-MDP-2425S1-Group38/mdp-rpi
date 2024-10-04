@@ -425,45 +425,224 @@ class Task1RPI:
                         flag = "t"
                         angle = self.drive_angle
 
-            self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
-            print("STM Command sent successfully...")
-            # while not self.get_stm_stop():
-            #     # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
-            #     pass
+            elif command["value"] == "CAPTURE_IMAGE":
+                flag = "S"
+                self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
+                self.rpi_action_queue.put(
+                    PiAction(cat="snap", value=command["capture_id"])
+                )
 
-            # time.sleep(0.75)
-            # print("STM stopped, sending time of capture...")
-            # self.pc.send(f"DETECT,{cmd.capture_id}")
+            # End of path (TBD)
+            elif command["value"] == "FIN":
+                self.logger.info(
+                    f"At FIN, self.failed_obstacles: {self.failed_obstacles}"
+                )
+                self.logger.info(
+                    f"At FIN, self.current_location: {self.current_location}"
+                )
+                # if len(self.failed_obstacles) != 0 and self.failed_attempt is False:
+                #     new_obstacle_list = list(self.failed_obstacles)
+                #     for i in list(self.success_obstacles):
+                #         # {'x': 5, 'y': 11, 'id': 1, 'd': 4}
+                #         i["d"] = 8
+                #         new_obstacle_list.append(i)
 
-        print(
-            f">>>>>>>>>>>> Completed in {(time.time_ns() - self.start_time) / 1e9:.2f} seconds."
-        )
+                #     self.logger.info("Attempting to go to failed obstacles")
+                #     self.failed_attempt = True
+                #     self.request_algo(new_obstacle_list)
+                #     self.retrylock = self.manager.Lock()
+                #     self.movement_lock.release()
+                #     continue
+
+                self.unpause.clear()
+                self.movement_lock.release()
+                self.logger.info("Commands queue finished.")
+                self.android_queue.put("info, Commands queue finished.")
+                self.android_queue.put("status, finished")
+                self.rpi_action_queue.put(PiAction(cat="stitch", value=""))
+            else:
+                raise Exception(f"Unknown command: {command}")
+
+    # Done
+    def rpi_action(self):
+        """
+        [Child Process]
+        """
+        while True:
+            action: PiAction = self.rpi_action_queue.get()
+            self.logger.debug(
+                f"PiAction retrieved from queue: {action.cat} {action.value}"
+            )
+            # Done
+            if action.cat == "obstacles":
+                for obs in action.value:
+                    self.obstacles[obs["id"]] = obs
+                self.request_algo(action.value)
+            elif action.cat == "snap":
+                self.snap_and_rec(obstacle_id_with_signal=action.value)
+            elif action.cat == "stitch":
+                self.request_stitch()
+
+    # Done
+    def snap_and_rec(self, obstacle_id_with_signal: str) -> None:
+        """
+        RPi snaps an image and calls the API for image-rec.
+        The response is then forwarded back to the android
+        :param obstacle_id_with_signal: the current obstacle ID followed by underscore followed by signal
+        """
+        obstacle_id = obstacle_id_with_signal
+        self.logger.info(f"Capturing image for obstacle id: {obstacle_id}")
+        self.android_queue.put(f"info, Capturing image for obstacle id: {obstacle_id}")
+        url = f"http://{API_IP}:{API_PORT}/image"
+        filename = f"{int(time.time())}_{obstacle_id}.jpg"
+
+        retry_count = 0
+
+        while True:
+            retry_count += 1
+            file = Camera().capture_file()
+
+            self.logger.debug("Requesting from image API")
+
+            response = requests.post(
+                url,
+                files={"file": (file)},
+                data={"obstacle_id": obstacle_id},  # Add obstacle_id to the form data
+            )
+
+            if response.status_code != 200:
+                self.logger.error(
+                    "Something went wrong when requesting path from image-rec API. Please try again."
+                )
+                return
+
+            results = json.loads(response.content)
+
+            if results["image_id"] != "NA" or retry_count > 6:
+                break
+            elif retry_count > 3:
+                self.logger.info(f"Image recognition results: {results}")
+            elif retry_count <= 3:
+                self.logger.info(f"Image recognition results: {results}")
+
+        # release lock so that bot can continue moving
+        self.movement_lock.release()
         try:
-            print("request stitch")
-            self.pc.send(f"PERFORM STITCHING,{len(count)}")
-        except OSError as e:
-            print("Error in sending stitching command to PC: " + e)
-
-        self.stop()
-
-    def stop_and_snap(self, cmd):
-        while not self.get_stm_stop():
-            # Wait until the STM has execute all the commands and stopped (True), then wait x seconds to recognise image
+            self.retrylock.release()
+        except:
             pass
 
-        time.sleep(0.75)
-        print("STM stopped, sending time of capture...")
-        self.gamestate.capture_and_process_image()
+        self.logger.info(f"results: {results}")
+        self.logger.info(f"self.obstacles: {self.obstacles}")
+        self.logger.info(
+            f"Image recognition results: {results} ({SYMBOL_MAP.get(results['image_id'])})"
+        )
 
-    def set_last_image(self, img) -> None:
-        print(f"Setting last_image as {self.last_image}")
-        self.last_image = img
+        if results["image_id"] == "NA":
+            self.failed_obstacles.append(self.obstacles[int(results["obstacle_id"])])
+            self.logger.info(
+                f"Added Obstacle {results['obstacle_id']} to failed obstacles."
+            )
+            self.logger.info(f"self.failed_obstacles: {self.failed_obstacles}")
+        else:
+            self.success_obstacles.append(self.obstacles[int(results["obstacle_id"])])
+            self.logger.info(f"self.success_obstacles: {self.success_obstacles}")
+        self.android_queue.put(f"TARGET,{results['obstacle_id']},{results['image_id']}")
 
-    def set_stm_stop(self, val) -> None:
-        self.STM_Stopped = val
+    # Done
+    def request_algo(self, obstacles: list):
+        """
+        Requests for a series of commands and the path from the Algo API.
+        The received commands and path are then queued in the respective queues
+        """
 
-    def get_stm_stop(self) -> bool:
-        return self.STM_Stopped
+        url = f"http://{API_IP}:{API_PORT}/algorithms"
+
+        body = {
+            "cat": "obstacles",
+            "value": {"obstacles": obstacles, "mode": 0},
+            "server_mode": "live",
+            "algo_type": "Exhaustive Astar",
+        }
+
+        print(body)
+
+        response = requests.post(url, json=body)
+
+        # Error encountered at the server, return early
+        if response.status_code != 200:
+            self.android_queue.put(
+                "error, Something went wrong when requesting path from Algo API."
+            )
+            self.logger.error(
+                "Something went wrong when requesting path from Algo API."
+            )
+            return
+
+        result = json.loads(response.content)
+        print(result)
+        commands = result["commands"]
+
+        # Put commands and paths into respective queues
+        self.clear_queues()
+        for c in commands:
+            self.command_queue.put(c)
+        self.android_queue.put(
+            "info, Commands and path received Algo API. Robot is ready to move."
+        )
+        self.logger.info("Commands and path received Algo API. Robot is ready to move.")
+
+    # Done
+    def request_stitch(self):
+        """Sends a stitch request to the image recognition API to stitch the different images together"""
+        url = f"http://{API_IP}:{API_PORT}/stitch"
+        response = requests.post(url)
+
+        # If error, then log, and send error to Android
+        if response.status_code != 200:
+            # Notify android
+            self.android_queue.put(
+                "error, Something went wrong when requesting stitch from the API."
+            )
+            self.logger.error(
+                "Something went wrong when requesting stitch from the API."
+            )
+            return
+
+        self.logger.info("Images stitched!")
+        self.android_queue.put("info, Images stitched!")
+
+    # Done
+    def clear_queues(self):
+        """Clear both command and path queues"""
+        while not self.command_queue.empty():
+            self.command_queue.get()
+
+    # Done
+    def check_api(self) -> bool:
+        """Check whether image recognition and algorithm API server is up and running
+
+        Returns:
+            bool: True if running, False if not.
+        """
+        # Check image recognition API
+        url = f"http://{API_IP}:{API_PORT}/status"
+        try:
+            response = requests.get(url, timeout=1)
+            if response.status_code == 200:
+                self.logger.debug("API is up!")
+                return True
+            return False
+        # If error, then log, and return False
+        except ConnectionError:
+            self.logger.warning("API Connection Error")
+            return False
+        except requests.Timeout:
+            self.logger.warning("API Timeout")
+            return False
+        except Exception as e:
+            self.logger.warning(f"API Exception: {e}")
+            return False
 
 
 def main(config):
