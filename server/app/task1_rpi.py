@@ -520,19 +520,19 @@ class Task1RPI:
                 self.logger.info(
                     f"At FIN, self.current_location: {self.current_location}"
                 )
-                if len(self.failed_obstacles) != 0 and self.failed_attempt is False:
-                    new_obstacle_list = list(self.failed_obstacles)
-                    for i in list(self.success_obstacles):
-                        # {'x': 5, 'y': 11, 'id': 1, 'd': 4}
-                        i["d"] = 8
-                        new_obstacle_list.append(i)
+                # if len(self.failed_obstacles) != 0 and self.failed_attempt is False:
+                #     new_obstacle_list = list(self.failed_obstacles)
+                #     for i in list(self.success_obstacles):
+                #         # {'x': 5, 'y': 11, 'id': 1, 'd': 4}
+                #         i["d"] = 8
+                #         new_obstacle_list.append(i)
 
-                    self.logger.info("Attempting to go to failed obstacles")
-                    self.failed_attempt = True
-                    self.request_algo(new_obstacle_list)
-                    self.retrylock = self.manager.Lock()
-                    self.movement_lock.release()
-                    continue
+                #     self.logger.info("Attempting to go to failed obstacles")
+                #     self.failed_attempt = True
+                #     self.request_algo(new_obstacle_list)
+                #     self.retrylock = self.manager.Lock()
+                #     self.movement_lock.release()
+                #     continue
 
                 self.unpause.clear()
                 self.movement_lock.release()
