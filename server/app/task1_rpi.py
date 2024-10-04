@@ -627,7 +627,7 @@ class Task1RPI:
         else:
             self.success_obstacles.append(self.obstacles[int(results["obstacle_id"])])
             self.logger.info(f"self.success_obstacles: {self.success_obstacles}")
-        self.android_queue.put(f"TARGET,{results["obstacle_id"]},{results['image_id']}")
+        self.android_queue.put(f"TARGET,{results['obstacle_id']},{results['image_id']}")
 
     # Done
     def request_algo(self, obstacles: list):
