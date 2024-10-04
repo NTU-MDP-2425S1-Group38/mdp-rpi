@@ -69,43 +69,35 @@ class Camera(metaclass=Singleton):
 
         return base64.b64encode(image_stream.getvalue()).decode("utf-8")
 
-    def capture_file(self, obstacle_id: str) -> str:
+    def capture_file(self) -> io.BytesIO:
         """
-        Method to capture an image, save it to a file, and return the filename.
-        :param obstacle_id: ID related to the obstacle
-        :param signal: The signal for the capture event
-        :return: Filename of the saved image
+        Method to capture an image, save it to a byte stream, and return the byte stream.
+        :return: BytesIO stream of the captured image
         """
 
         self.logger.info("Starting camera!")
 
-        self.cam.start()  # this is the crux, picam2 doesn't throw errors if it is not start()'ed
+        self.cam.start()  # Ensure the camera is started
 
         self.logger.info("Capturing image!")
 
-        # Create a BytesIO object to store the image in memory
-        image_stream = io.BytesIO()
-
-        # Capture the image in JPEG format
+        # Capture the image in numpy array format
         img = self.cam.capture_array()
         self.logger.info(f"Image captured: {img.shape}")
 
         self.cam.stop()
 
-        # Save the image to a file
-        timestamp = int(time.time())  # Generate timestamp
-        filename = f"{timestamp}_{obstacle_id}.jpg"
-        self.logger.info(f"Saving image as {filename}")
+        # Create a BytesIO object to store the image in memory
+        image_stream = io.BytesIO()
 
-        # Get the home directory of the current user
-        home_dir = os.path.expanduser(f"~/{filename}")
-
+        # Convert the numpy array to a PIL image
         pil_img = Image.fromarray(img)
-        pil_img.save(home_dir, format="JPEG", quality=70)
 
-        # Encode the image to base64 (if you still need this part)
-        # pil_img.save(image_stream, format="JPEG", quality=70)
-        # base64_image = base64.b64encode(image_stream.getvalue()).decode("utf-8")
+        # Save the image to the BytesIO stream
+        pil_img.save(image_stream, format="JPEG", quality=70)
 
-        # Return the filename (the full path where it's saved)
-        return home_dir
+        # Reset the stream position to the beginning so it can be read
+        image_stream.seek(0)
+
+        # Return the image stream
+        return image_stream
