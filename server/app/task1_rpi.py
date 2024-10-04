@@ -2,23 +2,14 @@
 import json
 import queue
 import time
-from multiprocessing import Process, Manager
+from multiprocessing import Manager, Process
 from typing import Optional
-import os
+
 import requests
-from modules.serial.android import Android
-from modules.serial.stm32 import STM
 from logger import prepare_logger
 from modules.camera.camera import Camera
-
-from app_types.obstacle import Obstacle
-from app_types.primatives.command import (
-    CommandInstruction,
-    MoveInstruction,
-    TurnInstruction,
-)
-from app_types.primatives.position import Position
-from utils.instructions import Instructions
+from modules.serial.android import Android
+from modules.serial.stm32 import STM
 
 API_IP = "192.168.100.194"
 API_PORT = 8000
@@ -30,6 +21,7 @@ obstacle_direction = {
     "WEST": 4,
 }
 
+# Need to Fix
 SYMBOL_MAP = {
     "10": "Bullseye",
     "11": "One",
@@ -57,11 +49,11 @@ SYMBOL_MAP = {
     "33": "X",
     "34": "Y",
     "35": "Z",
-    "36": "Up Arrow",
-    "37": "Down Arrow",
-    "38": "Right Arrow",
-    "39": "Left Arrow",
-    "40": "Stop",
+    "36": "UP",
+    "37": "DOWN",
+    "38": "RIGHT",
+    "39": "LEFT",
+    "40": "CIRCLE",
 }
 
 
@@ -445,7 +437,6 @@ class Task1RPI:
                 message = self.android_queue.get(timeout=0.5)
             except queue.Empty:
                 continue
-
             try:
                 self.android.send(message)
             except OSError:
@@ -499,7 +490,7 @@ class Task1RPI:
                 "BACKWARD_LEFT",
                 "BACKWARD_RIGHT",
             ]:
-                val = 90
+                val = 85
                 if command["value"] == "FORWARD_LEFT":
                     flag = "T"
                     angle = -self.drive_angle
