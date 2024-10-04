@@ -30,7 +30,7 @@ class PiAction:
         return self._value
 
 
-class RaspberryPi:
+class Task2RPI:
     def __init__(self):
         # Initialize logger and communication objects with Android and STM
         self.logger = prepare_logger()
@@ -410,6 +410,8 @@ class RaspberryPi:
             return False
 
 
-if __name__ == "__main__":
-    rpi = RaspberryPi()
-    rpi.start()
+def main(config):
+    print("# ------------- Running Task 1, RPi ---------------- #")
+    print(f"You are {'out' if config.is_outdoors else 'in'}doors.")
+    task2 = Task2RPI(config)  # init
+    task2.start()
