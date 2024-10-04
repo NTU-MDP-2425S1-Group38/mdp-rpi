@@ -1,48 +1,15 @@
+#!/usr/bin/env python3
 import json
-import os
+import queue
 import time
-from multiprocessing import Manager
-from threading import Thread
-import logging
+from multiprocessing import Manager, Process
+from typing import Optional
+
 import requests
-import uvicorn
-from dotenv import load_dotenv
+from logger import prepare_logger
+from modules.camera.camera import Camera
 from modules.serial.android import Android
 from modules.serial.stm32 import STM
-from modules.web_server.web_server import WebServer
-from utils.logger import init_logger
-from modules.gamestate import GameState
-from multiprocessing import Process
-
-from app_types.obstacle import Obstacle
-from app_types.primatives.command import (
-    CommandInstruction,
-    MoveInstruction,
-    TurnInstruction,
-)
-from app_types.primatives.position import Position
-from utils.instructions import Instructions
-
-# # To be explored
-# from Communication.pc import PC
-# from openapi_client.api.pathfinding_api import PathfindingApi
-# from openapi_client.api_client import ApiClient
-
-# # Pathfinding
-# from openapi_client.configuration import Configuration
-# from openapi_client.models.direction import Direction
-# from openapi_client.models.misc_instruction import MiscInstruction
-# from openapi_client.models.pathfinding_point import PathfindingPoint
-# from openapi_client.models.pathfinding_request import PathfindingRequest
-# from openapi_client.models.pathfinding_request_obstacle import (
-#     PathfindingRequestObstacle,
-# )
-# from openapi_client.models.pathfinding_request_robot import PathfindingRequestRobot
-# from openapi_client.models.pathfinding_response_move_instruction import (
-#     PathfindingResponseMoveInstruction,
-# )
-# from openapi_client.models.turn_instruction import TurnInstruction
-# from TestingScripts.Camera_Streaming_UDP.stream_server import StreamServer
 
 API_IP = "192.168.100.194"
 API_PORT = 8000
@@ -54,29 +21,105 @@ obstacle_direction = {
     "WEST": 4,
 }
 
+# Need to Fix
+SYMBOL_MAP = {
+    "Bullseye": "10",
+    "One": "11",
+    "Two": "12",
+    "Three": "13",
+    "Four": "14",
+    "Five": "15",
+    "Six": "16",
+    "Seven": "17",
+    "Eight": "18",
+    "Nine": "19",
+    "A": "20",
+    "B": "21",
+    "C": "22",
+    "D": "23",
+    "E": "24",
+    "F": "25",
+    "G": "26",
+    "H": "27",
+    "S": "28",
+    "T": "29",
+    "U": "30",
+    "V": "31",
+    "W": "32",
+    "X": "33",
+    "Y": "34",
+    "Z": "35",
+    "UP": "36",
+    "DOWN": "37",
+    "RIGHT": "38",
+    "LEFT": "39",
+    "CIRCLE": "40",
+}
+
+
+class PiAction:
+    """
+    Class that represents an action that the RPi needs to take.
+    """
+
+    def __init__(self, cat, value):
+        """
+        :param cat: The category of the action. Can be 'info', 'mode', 'path', 'snap', 'obstacle', 'location', 'failed', 'success'
+        :param value: The value of the action. Can be a string, a list of coordinates, or a list of obstacles.
+        """
+        self._cat = cat
+        self._value = value
+
+    @property
+    def cat(self):
+        return self._cat
+
+    @property
+    def value(self):
+        return self._value
+
 
 class Task1RPI:
+    """
+    Class that represents the Raspberry Pi.
+    """
+
     def __init__(self, config):
         self.config = config
-        self.logger = logging.getLogger("Task1RPI")
-        self.gamestate = GameState()
+        self.logger = prepare_logger()
+        self.android = Android()
+        self.stm = STM()
+
+        self.manager = Manager()
+
+        self.android_dropped = self.manager.Event()
+        self.unpause = self.manager.Event()
+
+        self.movement_lock = self.manager.Lock()
+
+        self.android_queue = self.manager.Queue()  # Messages to send to Android
+        # Messages that need to be processed by RPi
+        self.rpi_action_queue = self.manager.Queue()
+        # Messages that need to be processed by STM32, as well as snap commands
+        self.command_queue = self.manager.Queue()
+        # X,Y,D coordinates of the robot after execution of a command
+        self.path_queue = self.manager.Queue()
+
+        self.proc_recv_android = None
+        self.proc_recv_stm32 = None
+        self.proc_android_sender = None
+        self.proc_command_follower = None
+        self.proc_rpi_action = None
+        self.rs_flag = False
+        self.success_obstacles = self.manager.list()
+        self.failed_obstacles = self.manager.list()
+        self.obstacles = self.manager.dict()
+        self.current_location = self.manager.dict()
+        self.failed_attempt = False
+
         self.obstacle_dict = {}  # Obstacle Dict
         self.robot = None  # Robot
         self.prev_image = None
-        self.stm = STM()
-        self.android = Android()
-        # self.pc = PC()
-        self.manager = Manager()
-        self.process_stm_receive = None
-        self.process_pc_receive = None
-        self.process_pc_stream = None
-        self.process_android_receive = None
-        self.android_dropped = self.manager.Event()
-
-        # self.conf = Configuration(host="http://192.168.14.13:5001")
-        # self.pathfinding_api = PathfindingApi(
-        #     api_client=ApiClient(configuration=self.conf)
-        # )
 
         self.last_image = None
         self.prev_image = None
@@ -86,208 +129,241 @@ class Task1RPI:
         self.drive_speed = 40 if config.is_outdoors else 55
         self.drive_angle = 25
 
-    def request_algo(self, obstacles: list[Obstacle]):
-        """
-        Requests for a series of commands and the path from the Algo API.
-        The received commands and path are then queued in the respective queues
-        """
-
-        url = f"http://{API_IP}:{API_PORT}/algo/live"
-        converted_obstacles = [
-            {"id": o.id, "x": o.position.x, "y": o.position.y, "d": o.direction.value}
-            for o in obstacles
-        ]
-        print("algo")
-        body = {
-            "cat": "obstacles",
-            "value": {"obstacles": converted_obstacles, "mode": 0},
-            "server_mode": "live",
-            "algo_type": "Exhaustive Astar",
-        }
-
-        print(body)
-
-        response = requests.post(url, json=body)
-
-        print("HELLOOO")
-        print(response.content)
-
-        # Error encountered at the server, return early
-        if response.status_code != 200:
-            print("Something went wrong when requesting path from Algo API.")
-            return
-
-        return response.content
-
-        # result = json.loads(response.content)["data"]
-        # commands = result["commands"]
-        # path = result["path"]
-
-        # Log commands received
-        # self.logger.debug(f"Commands received from API: {commands}")
-
-        # self.logger.info("Commands and path received Algo API. Robot is ready to move.")
-
-    def initialize(self):
+    # Done
+    def start(self):
+        """Starts the RPi orchestrator"""
         try:
-            # let stream server start before calling other sockets.
-            # self.process_pc_stream = Thread(target=self.stream_start)
-            # self.process_pc_stream.start()  # Start the Stream
-            # time.sleep(0.1)
+            ### Start up initialization ###
 
+            self.android.connect()
+            self.android_queue.put("info, You are connected to the RPi!")
             self.stm.connect()
-            # self.pc.connect()
+            self.check_api()
+
+            # Define child processes
+            self.proc_recv_android = Process(target=self.recv_android)
+            self.proc_recv_stm32 = Process(target=self.recv_stm)
+            self.proc_android_sender = Process(target=self.android_sender)
+            self.proc_command_follower = Process(target=self.command_follower)
+            self.proc_rpi_action = Process(target=self.rpi_action)
+
+            # Start child processes
+            self.proc_recv_android.start()
+            self.proc_recv_stm32.start()
+            self.proc_android_sender.start()
+            self.proc_command_follower.start()
+            self.proc_rpi_action.start()
+
+            self.logger.info("Child Processes started")
+
+            ### Start up complete ###
+
+            # Send success message to Android
+            self.android_queue.put("info, Robot is ready!")
+            self.android_queue.put("mode, path")
+            self.reconnect_android()
+
+        except KeyboardInterrupt:
+            self.stop()
+
+    # Done
+    def stop(self):
+        """Stops all processes on the RPi and disconnects gracefully with Android and STM32"""
+        self.android.disconnect()
+        self.stm.disconnect()
+        self.logger.info("Program exited!")
+
+    # Done
+    def reconnect_android(self):
+        """Handles the reconnection to Android in the event of a lost connection."""
+        self.logger.info("Reconnection handler is watching...")
+
+        while True:
+            # Wait for android connection to drop
+            self.android_dropped.wait()
+
+            self.logger.error("Android link is down!")
+
+            # Kill child processes
+            self.logger.debug("Killing android child processes")
+            self.proc_android_sender.kill()
+            self.proc_recv_android.kill()
+
+            # Wait for the child processes to finish
+            self.proc_android_sender.join()
+            self.proc_recv_android.join()
+            assert self.proc_android_sender.is_alive() is False
+            assert self.proc_recv_android.is_alive() is False
+            self.logger.debug("Android child processes killed")
+
+            # Clean up old sockets
+            self.android.disconnect()
+
+            # Reconnect
             self.android.connect()
 
-            print("PC Successfully connected through socket")
-            self.process_android_receive = Process(target=self.android_receive)
-            self.process_stm_receive = Process(target=self.stm_receive)
-            self.process_pc_receive = Process(target=self.run_web_server)
+            # Recreate Android processes
+            self.proc_recv_android = Process(target=self.recv_android)
+            self.proc_android_sender = Process(target=self.android_sender)
 
-            # Start Threads
-            self.logger.info("Starting PC")
-            self.process_pc_receive.start()  # Receive from PC
-            self.logger.info("Starting android")
-            self.process_android_receive.start()  # Receive from android
-            self.logger.info("Starting STM")
-            self.process_stm_receive.start()  # Receive from stm
+            # Start previously killed processes
+            self.proc_recv_android.start()
+            self.proc_android_sender.start()
 
-        except OSError as e:
-            print("Initialization failed: ", e)
+            self.logger.info("Android child processes restarted")
+            self.android_queue.put("info, You are reconnected!")
+            self.android_queue.put("mode, path")
 
-    def run_web_server(self) -> None:
-        load_dotenv()
-        init_logger()
-        web_server = WebServer().get_web_server()
-        uvicorn.run(
-            web_server,
-            host="0.0.0.0",
-            port=int(os.getenv("WEB_SERVER_PORT", 8080)),  # converts str env var to int
-            log_level="debug",
-            log_config=None,
-        )
+            self.android_dropped.clear()
 
-    def pc_receive(self) -> None:
+    # Done
+    def recv_android(self) -> None:
+        """
+        [Child Process] Processes the messages received from Android
+        """
         while True:
+            msg_str: Optional[str] = None
             try:
-                message_rcv = self.pc.receive()
-                print(f"Received from PC: {message_rcv}")
-                if "NONE" in message_rcv:
-                    self.set_last_image("NONE")
-                else:
-                    msg_split = message_rcv.split(",")
-                    if len(msg_split) != 3:
-                        continue
-
-                    obstacle_id, conf_str, object_id = msg_split
-                    confidence_level = None
-
-                    try:
-                        confidence_level = float(conf_str)
-                    except ValueError:
-                        confidence_level = None
-
-                    print("OBJECT ID:", object_id)
-
-                    if confidence_level is not None:
-                        self.android.send(f"TARGET,{obstacle_id},{object_id}")
-
-            except OSError as e:
-                print(f"Error in receiving data: {e}")
-                break
-
-    # Done (Android)
-    def android_receive(self) -> None:
-        print("Went into android receive function")
-        while True:
-            message_rcv = None
-            try:
-                message_rcv = self.android.receive()
-                messages = message_rcv.split("\n")
-                for message_rcv in messages:
-                    if len(message_rcv) == 0:
-                        continue
-
-                    print("Message received from Android:", message_rcv)
-                    if "BEGIN" in message_rcv:
-                        print("BEGINNNN!")
-                        # TODO: Begin Task 1
-                        self.start()  # Calculate the path
-                    elif "CLEAR" in message_rcv:
-                        print(
-                            " --------------- CLEARING OBSTACLES LIST. ---------------- "
-                        )
-                        self.obstacle_dict.clear()
-                    elif "OBSTACLE" in message_rcv:
-                        print("OBSTACLE!!!!")
-                        id, x, y, dir = message_rcv.split(",")[1:]
-                        id = int(id)
-
-                        if dir == "-1":
-                            if id in self.obstacle_dict:
-                                del self.obstacle_dict[id]
-                                print("Deleted obstacle", id)
-                        elif dir not in ["NORTH", "SOUTH", "EAST", "WEST"]:
-                            print("Invalid direction provided:", dir + ", ignoring...")
-                            continue
-                        else:
-                            newObstacle = Obstacle(
-                                id=id,
-                                position=Position(x=int(x), y=int(y)),
-                                direction=obstacle_direction[dir],
-                            )
-                            self.obstacle_dict[id] = newObstacle
-
-                            print("Obstacle set successfully: ", newObstacle)
-                        print(
-                            f"--------------- Current list {len(self.obstacle_dict)}: -------------"
-                        )
-                        obs_items = self.obstacle_dict.items()
-                        if len(obs_items) == 0:
-                            print("! no obstacles.")
-                        else:
-                            for id, obstacle in obs_items:
-                                print(f"{id}: {obstacle}")
-
-                    elif "ROBOT" in message_rcv:
-                        print("NEW ROBOT LOCATION!!!")
-                        x, y, dir = message_rcv.split(",")[1:]
-                        x, y = int(x), int(y)
-
-                        if x < 0 or y < 0:
-                            print("Illegal robot coordinate, ignoring...")
-                            continue
-
-                        self.robot = {"x": x, "y": y, "dir": dir}
-                        print("Robot set successfully: ", self.robot)
-                    else:
-                        # Catch for messages with no keywords (OBSTACLE/ROBOT/BEGIN)
-                        print("Not a keyword, message received: ", message_rcv)
-
+                msg_str = self.android.receive()
             except OSError:
                 self.android_dropped.set()
-                print("Event set: Bluetooth connection dropped")
+                self.logger.debug("Event set: Android connection dropped")
 
-            if message_rcv is None:
+            if msg_str is None:
                 continue
 
-    # Done (STM)
-    def stm_receive(self) -> None:
+            messages = msg_str.split("\n")
+
+            for message_rcv in messages:
+                ## Command: Set obstacles ##
+                if "OBSTACLE" in message_rcv:
+                    self.logger.info("OBSTACLE!!!!")
+                    id, x, y, dir = message_rcv.split(",")[1:]
+                    id = int(id)
+
+                    if dir == "-1":
+                        if id in self.obstacle_dict:
+                            del self.obstacle_dict[id]
+                            self.logger.info("Deleted obstacle", id)
+                    elif dir not in ["NORTH", "SOUTH", "EAST", "WEST"]:
+                        self.logger.info(
+                            f"Invalid direction provided: {dir}, ignoring..."
+                        )
+                        continue
+                    else:
+                        newObstacle = {
+                            "id": id,
+                            "x": int(x),
+                            "y": int(y),
+                            "d": obstacle_direction[dir],
+                        }
+                        self.obstacle_dict[id] = newObstacle
+
+                        self.logger.info("Obstacle set successfully: ", newObstacle)
+                    self.logger.info(
+                        f"--------------- Current list {len(self.obstacle_dict)}: -------------"
+                    )
+                    obs_items = self.obstacle_dict.items()
+                    if len(obs_items) == 0:
+                        self.logger.info("! no obstacles.")
+                    else:
+                        for id, obstacle in obs_items:
+                            self.logger.info(f"{id}: {obstacle}")
+
+                elif "ROBOT" in message_rcv:
+                    self.logger.info("NEW ROBOT LOCATION!!!")
+                    x, y, dir = message_rcv.split(",")[1:]
+                    x, y = int(x), int(y)
+
+                    if x < 0 or y < 0:
+                        self.logger.info("Illegal robot coordinate, ignoring...")
+                        continue
+
+                    self.robot = {"x": x, "y": y, "dir": dir}
+                    self.logger.info("Robot set successfully: ", self.robot)
+
+                elif "BEGIN" in message_rcv:
+                    if not self.check_api():
+                        self.logger.error("API is down! Start command aborted.")
+                        self.android_queue.put(
+                            "error, API is down, start command aborted."
+                        )
+
+                    self.rpi_action_queue.put(
+                        PiAction(
+                            cat="obstacles", value=list(self.obstacle_dict.values())
+                        )
+                    )
+                    self.logger.debug(
+                        f"Set obstacles PiAction added to queue: {self.obstacle_dict}"
+                    )
+
+                    while self.command_queue.empty():
+                        pass
+
+                    # Commencing path following
+                    if not self.command_queue.empty():
+                        # Main trigger to start movement #
+                        self.unpause.set()
+                        self.logger.info(
+                            "Start command received, starting robot on path!"
+                        )
+                        self.android_queue.put("info, Starting robot on path!")
+
+                        self.android_queue.put("status, running")
+                    else:
+                        self.logger.warning(
+                            "The command queue is empty, please set obstacles."
+                        )
+                        self.android_queue.put(
+                            "error,Command queue is empty, did you set obstacles?",
+                        )
+
+                elif "CLEAR" in message_rcv:
+                    print(" --------------- CLEARING OBSTACLES LIST. ---------------- ")
+                    self.obstacle_dict.clear()
+
+                else:
+                    # Catch for messages with no keywords (OBSTACLE/ROBOT/BEGIN)
+                    self.logger.info(f"Not a keyword, message received: {message_rcv}")
+
+    def recv_stm(self) -> None:
+        """
+        [Child Process] Receive acknowledgement messages from STM32, and release the movement lock
+        """
         msg = ""
         while True:
-            message_rcv = None
+            message = None
+
             try:
-                message_rcv = self.stm.wait_receive()
-                print("Message received from STM: ", message_rcv)
-                if "fS" in message_rcv:
-                    self.set_stm_stop(
-                        True
-                    )  # Finished stopping, can start delay to recognise image
-                    self.gamestate.capture_and_process_image()
-                    print("Setting STM Stopped to true")
-                elif message_rcv[0] == "f":
+                message = self.stm.wait_receive()
+                self.logger.info(f"Message received from STM: {message}")
+
+                if message.startswith("fS"):
+                    continue
+                    # if self.rs_flag is False:
+                    #     self.rs_flag = True
+                    #     self.logger.debug("ACK for RS00 from STM32 received.")
+                    #     continue
+                    # try:
+                    #     self.movement_lock.release()
+                    #     try:
+                    #         self.retrylock.release()
+                    #     except:
+                    #         pass
+                    #     self.logger.debug(
+                    #         "ACK from STM32 received, movement lock released."
+                    #     )
+                    #     self.logger.info(
+                    #         f"self.current_location = {self.current_location}"
+                    #     )
+
+                    # except Exception:
+                    #     self.logger.warning("Tried to release a released lock!")
+
+                elif message[0] == "f":
                     # Finished command, send to android
-                    message_split = message_rcv[1:].split(
+                    message_split = message[1:].split(
                         "|"
                     )  # Ignore the 'f' at the start
                     cmd_speed = message_split[0]
@@ -321,75 +397,83 @@ class Task1RPI:
                             msg = "MOVE,FORWARD," + distance
                     else:
                         # Unknown turning degree
-                        print("Unknown turning degree")
+                        self.logger.info("Unknown turning degree")
                         msg = "No instruction"
                         continue
 
-                    print("Msg: ", msg)
+                    self.logger.info(f"Msg: {msg}")
+                    self.android_queue.put(msg)
+                    self.logger.info(f"SENT TO ANDROID SUCCESSFULLY: {msg}")
                     try:
-                        self.android.send(msg)
-                        print("SENT TO ANDROID SUCCESSFULLY: ", msg)
-                    except OSError:
-                        self.android_dropped.set()
-                        print("Event set: Android dropped")
+                        self.movement_lock.release()
+                        try:
+                            self.retrylock.release()
+                        except:
+                            pass
+                        self.logger.debug(
+                            "ACK from STM32 received, movement lock released."
+                        )
+                        self.logger.info(
+                            f"self.current_location = {self.current_location}"
+                        )
+                    except Exception:
+                        self.logger.warning("Tried to release a released lock!")
 
-                    self.android_dropped.clear()  # Clear previously set event
+                else:
+                    self.logger.warning(f"Ignored unknown message from STM: {message}")
+            except OSError:
+                self.logger.error("Event set: STM32 dropped")
+                self.stm_dropped.set()
+                break
 
-            except OSError as e:
-                print(f"Error in receiving STM data: {e}")
-
-            if message_rcv is None:
+    # Done
+    def android_sender(self) -> None:
+        """
+        [Child process] Responsible for retrieving messages from android_queue and sending them over the Android link.
+        """
+        while True:
+            # Retrieve from queue
+            try:
+                message = self.android_queue.get(timeout=0.5)
+            except queue.Empty:
                 continue
+            try:
+                self.android.send(message)
+            except OSError:
+                self.android_dropped.set()
+                self.logger.debug("Event set: Android dropped")
 
-    # Done (Gamestate)
-    def stop(self):
-        """Stops all processes on the RPi and disconnects from Android, STM and PC"""
-        time.sleep(0.2)
-        self.android.send("STOP")
-        # self.android.disconnect()
-        # self.stm.disconnect()
-        # self.pc.disconnect()
-        # TODO: Add Stream disconnect/end
-        print("Program Ended\n")
+    def command_follower(self) -> None:
+        """
+        [Child Process]
+        """
+        while True:
+            # Retrieve next movement command
+            command: str = self.command_queue.get()
+            self.logger.debug("wait for unpause")
+            # Wait for unpause event to be true [Main Trigger]
+            try:
+                self.logger.debug("wait for retrylock")
+                self.retrylock.acquire()
+                self.retrylock.release()
+            except:
+                self.logger.debug("wait for unpause")
+                self.unpause.wait()
+            self.logger.debug("wait for movelock")
+            # Acquire lock first (needed for both moving, and snapping pictures)
+            self.movement_lock.acquire()
 
-    # Done (Gamestate)
-    def start(self):
-        # pathfindingRequest = PathfindingRequest(
-        #     obstacles=self.obstacle_dict.values(), robot=self.robot, verbose=False
-        # )
-        obstacles = list(self.obstacle_dict.values())
-        # response: Instructions = None
-
-        self.start_time = time.time_ns()
-        print("! Sending request to API...")
-        commands = json.loads(self.request_algo(obstacles))["commands"]
-        # try:
-        #     # response = self.pathfinding_api.pathfinding_post(pathfindingRequest)
-        #     response = self.gamestate.set_obstacles(obstacles)
-        # except:
-        #     print("Server failed, try again.")
-        #     return
-
-        print(
-            f"! Request completed in {(time.time_ns() - self.start_time) / 1e9:.3f}s."
-        )
-        count = 0
-        while len(commands) > 0:
-            cmd = commands.pop(0)
-            self.logger.info(f"Current command: {cmd}")
             angle = 0
             flag = ""
             val = 0
 
-            print(cmd)
-
-            if isinstance(cmd["value"], dict) and cmd["value"]["move"] in [
+            if isinstance(command["value"], dict) and command["value"]["move"] in [
                 "FORWARD",
                 "BACKWARD",
             ]:
-                move_direction = cmd["value"]["move"]
+                move_direction = command["value"]["move"]
                 angle = 0
-                val = cmd["value"]["amount"]
+                val = command["value"]["amount"]
                 self.logger.info(f"AMOUNT TO MOVE: {val}")
                 self.logger.info(f"MOVE DIRECTION: {move_direction}")
 
@@ -397,33 +481,29 @@ class Task1RPI:
                     flag = "T"
                 elif move_direction == "BACKWARD":
                     flag = "t"
-            else:
-                if cmd["value"] == "CAPTURE_IMAGE":
-                    flag = "S"
-                    count += 1
-                    self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
-                    # self.stop_and_snap(cmd)
-                    continue
 
-                elif cmd["value"] in [
-                    "FORWARD_LEFT",
-                    "FORWARD_RIGHT",
-                    "BACKWARD_LEFT",
-                    "BACKWARD_RIGHT",
-                ]:
-                    val = 90
-                    if cmd["value"] == "FORWARD_LEFT":
-                        flag = "T"
-                        angle = -self.drive_angle
-                    elif cmd["value"] == "FORWARD_RIGHT":
-                        flag = "T"
-                        angle = self.drive_angle
-                    elif cmd["value"] == "BACKWARD_LEFT":
-                        flag = "t"
-                        angle = -self.drive_angle
-                    elif cmd["value"] == "BACKWARD_RIGHT":
-                        flag = "t"
-                        angle = self.drive_angle
+                self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
+
+            elif command["value"] in [
+                "FORWARD_LEFT",
+                "FORWARD_RIGHT",
+                "BACKWARD_LEFT",
+                "BACKWARD_RIGHT",
+            ]:
+                val = 85
+                if command["value"] == "FORWARD_LEFT":
+                    flag = "T"
+                    angle = -self.drive_angle
+                elif command["value"] == "FORWARD_RIGHT":
+                    flag = "T"
+                    angle = self.drive_angle
+                elif command["value"] == "BACKWARD_LEFT":
+                    flag = "t"
+                    angle = -self.drive_angle
+                elif command["value"] == "BACKWARD_RIGHT":
+                    flag = "t"
+                    angle = self.drive_angle
+                self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
 
             elif command["value"] == "CAPTURE_IMAGE":
                 flag = "S"
@@ -649,4 +729,4 @@ def main(config):
     print("# ------------- Running Task 1, RPi ---------------- #")
     print(f"You are {'out' if config.is_outdoors else 'in'}doors.")
     task1 = Task1RPI(config)  # init
-    task1.initialize()
+    task1.start()
