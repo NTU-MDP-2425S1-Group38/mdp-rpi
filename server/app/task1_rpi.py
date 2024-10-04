@@ -2,23 +2,14 @@
 import json
 import queue
 import time
-from multiprocessing import Process, Manager
+from multiprocessing import Manager, Process
 from typing import Optional
-import os
+
 import requests
-from modules.serial.android import Android
-from modules.serial.stm32 import STM
 from logger import prepare_logger
 from modules.camera.camera import Camera
-
-from app_types.obstacle import Obstacle
-from app_types.primatives.command import (
-    CommandInstruction,
-    MoveInstruction,
-    TurnInstruction,
-)
-from app_types.primatives.position import Position
-from utils.instructions import Instructions
+from modules.serial.android import Android
+from modules.serial.stm32 import STM
 
 API_IP = "192.168.100.194"
 API_PORT = 8000
@@ -30,38 +21,39 @@ obstacle_direction = {
     "WEST": 4,
 }
 
+# Need to Fix
 SYMBOL_MAP = {
-    "10": "Bullseye",
-    "11": "One",
-    "12": "Two",
-    "13": "Three",
-    "14": "Four",
-    "15": "Five",
-    "16": "Six",
-    "17": "Seven",
-    "18": "Eight",
-    "19": "Nine",
-    "20": "A",
-    "21": "B",
-    "22": "C",
-    "23": "D",
-    "24": "E",
-    "25": "F",
-    "26": "G",
-    "27": "H",
-    "28": "S",
-    "29": "T",
-    "30": "U",
-    "31": "V",
-    "32": "W",
-    "33": "X",
-    "34": "Y",
-    "35": "Z",
-    "36": "Up Arrow",
-    "37": "Down Arrow",
-    "38": "Right Arrow",
-    "39": "Left Arrow",
-    "40": "Stop",
+    "Bullseye": "10",
+    "One": "11",
+    "Two": "12",
+    "Three": "13",
+    "Four": "14",
+    "Five": "15",
+    "Six": "16",
+    "Seven": "17",
+    "Eight": "18",
+    "Nine": "19",
+    "A": "20",
+    "B": "21",
+    "C": "22",
+    "D": "23",
+    "E": "24",
+    "F": "25",
+    "G": "26",
+    "H": "27",
+    "S": "28",
+    "T": "29",
+    "U": "30",
+    "V": "31",
+    "W": "32",
+    "X": "33",
+    "Y": "34",
+    "Z": "35",
+    "UP": "36",
+    "DOWN": "37",
+    "RIGHT": "38",
+    "LEFT": "39",
+    "CIRCLE": "40",
 }
 
 
@@ -445,7 +437,6 @@ class Task1RPI:
                 message = self.android_queue.get(timeout=0.5)
             except queue.Empty:
                 continue
-
             try:
                 self.android.send(message)
             except OSError:
@@ -499,7 +490,7 @@ class Task1RPI:
                 "BACKWARD_LEFT",
                 "BACKWARD_RIGHT",
             ]:
-                val = 90
+                val = 85
                 if command["value"] == "FORWARD_LEFT":
                     flag = "T"
                     angle = -self.drive_angle
@@ -636,7 +627,7 @@ class Task1RPI:
         else:
             self.success_obstacles.append(self.obstacles[int(results["obstacle_id"])])
             self.logger.info(f"self.success_obstacles: {self.success_obstacles}")
-        self.android_queue.put(f"TARGET,{results["obstacle_id"]},{results['image_id']}")
+        self.android_queue.put(f"TARGET,{results['obstacle_id']},{results['image_id']}")
 
     # Done
     def request_algo(self, obstacles: list):

@@ -1,5 +1,5 @@
 from config import get_config
-from server.app.task1_rpi import main as t1_main
+from task1_rpi import main as t1_main
 from task2_rpi import main as t2_main
 
 task_dict = {1: t1_main, 2: t2_main}
