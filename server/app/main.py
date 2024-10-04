@@ -5,22 +5,24 @@ import logging
 import os
 import signal
 import sys
+import threading
 from multiprocessing import Process, Event
+from typing import List
+
 from dotenv import load_dotenv
 from modules.serial.stm32 import STM
 from modules.serial.android import Android
-from modules.camera.camera import Camera
-from modules.gamestate import GameState
 from modules.web_server.web_server import WebServer
 from utils.logger import init_logger
 import uvicorn
 
 
-def run_web_server(ready_event) -> None:
+def run_web_server(ready_event: Event) -> None:
     load_dotenv()
     init_logger()
     logging.getLogger().info("Starting server as main!")
     web_server = WebServer().get_web_server()
+    ready_event.set()  # Signal that the web server is ready
     uvicorn.run(
         web_server,
         host="0.0.0.0",
@@ -28,10 +30,9 @@ def run_web_server(ready_event) -> None:
         log_level="debug",
         log_config=None,
     )
-    ready_event.set()  # Signal that the web server is ready
 
 
-def run_bluetooth_server(ready_event) -> None:
+def run_bluetooth_server(ready_event: Event) -> None:
     load_dotenv()
     init_logger()
     android = Android()
@@ -39,29 +40,25 @@ def run_bluetooth_server(ready_event) -> None:
     android.run()
 
 
-def run_stm(ready_event) -> None:
+def run_stm(ready_event: Event) -> None:
     load_dotenv()
     init_logger()
     stm = STM()
-    stm.connect()
     ready_event.set()  # Signal that the STM is ready
+    stm.connect()
 
 
 def main():
     load_dotenv()
     init_logger()
 
-    processes = []
-    web_server_ready = Event()
-    bluetooth_ready = Event()
-    stm_ready = Event()
+    threads:List[threading.Thread] = []
+
 
     def signal_handler(signum, frame):
         logging.getLogger().info(
             "Received termination signal. Shutting down gracefully..."
         )
-        for process in processes:
-            process.kill()
 
         sys.exit(0)
 
@@ -69,24 +66,17 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    # Create the processes and pass the ready events
-    server_process = Process(target=run_web_server, args=(web_server_ready,))
-    bluetooth_process = Process(target=run_bluetooth_server, args=(bluetooth_ready,))
-    stm_process = Process(target=run_stm, args=(stm_ready,))
+    # Create the threads and pass the ready events
+    server_process = threading.Thread(target=run_web_server)
+    bluetooth_process = threading.Thread(target=run_bluetooth_server)
+    stm_process = threading.Thread(target=run_stm)
 
-    processes.extend([server_process, bluetooth_process, stm_process])
+    threads.extend([server_process, bluetooth_process, stm_process])
 
-    for p in processes:
+    for p in threads:
         p.start()
 
-    # Wait for all processes to signal that they are ready
-    web_server_ready.wait()
-    bluetooth_ready.wait()
-    stm_ready.wait()
-
-    logging.getLogger().info("All processes initialized. Now initializing GameState.")
-
-    for p in processes:
+    for p in threads:
         p.join()
 
 
