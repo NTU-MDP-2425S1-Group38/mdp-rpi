@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Literal
 
 from app_types.primatives.cv import CvResponse
@@ -90,6 +91,7 @@ class TaskTwoRunner(metaclass=Singleton):
             ),
             StmWiggle()
         ])
+        time.sleep(5)
 
     def _go_around_obstacle(self, direction:Literal["left", "right"]):
         """
