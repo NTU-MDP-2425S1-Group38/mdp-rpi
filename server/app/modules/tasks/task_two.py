@@ -5,7 +5,7 @@ from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
 from modules.camera.camera import Camera
 from modules.serial import STM
-from modules.serial.stm_commands import StmMoveToDistance, StmMove, StmWiggle, StmToggleMeasure, StmTurn
+from modules.serial.stm_commands import StmMoveToDistance, StmMove, StmWiggle, StmToggleMeasure, StmTurn, StmStraight
 from modules.web_server.connection_manager import ConnectionManager
 from utils.metaclass.singleton import Singleton
 
@@ -113,7 +113,16 @@ class TaskTwoRunner(metaclass=Singleton):
             StmTurn(
                 angle=toggle_flip * 90,
                 speed=self.config.turn_speed
-            )
+            ),
+            StmWiggle(),
+            StmStraight(
+                distance=20, speed=self.config.turn_speed
+            ),
+            StmTurn(
+                angle=toggle_flip * 90,
+                speed=self.config.turn_speed
+            ),
+            StmWiggle()
         ])
 
     """
