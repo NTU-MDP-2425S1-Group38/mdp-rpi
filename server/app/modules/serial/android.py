@@ -151,8 +151,11 @@ class Android(metaclass=Singleton):
             self.logger.info("Sent to Android: %s", str(message))
             # ~ self.logger.info("Sent to Android: %s", str(message.jsonify))
         except OSError as e:
-            self.logger.info("Message sending failed: %s", str(e))
-            raise e
+            self.logger.error("Message sending failed: %s", str(e))
+            self.logger.warning("Attempting to reconnect and send message")
+            self.connect()
+            self.send(message)
+
 
     def receive(self) -> Optional[str]:
         """Receive message from Android"""
@@ -198,7 +201,10 @@ class Android(metaclass=Singleton):
                 # self.stm.send_cmd(flag, int(drive_speed), int(angle), int(val))
             except OSError:
                 # self.android_dropped.set()
-                self.logger.info("Event set: Bluetooth connection dropped")
+                self.logger.error("Event set: Bluetooth connection dropped")
+                self.logger.warning("Attempting to reconnect")
+                self.connect()
+
 
     def run_task_1(self) -> None:
         """
