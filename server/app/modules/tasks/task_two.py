@@ -20,7 +20,7 @@ class TaskTwoRunner(metaclass=Singleton):
         turn_front_distance_threshold: int = 40
 
         forward_speed: int = 70
-        turn_speed: int = 70
+        turn_speed: int = 40
 
         SERVO_TURN_ANGLE = 25
 
