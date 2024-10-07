@@ -79,11 +79,6 @@ class TaskTwoRunner(metaclass=Singleton):
                 speed=self.config.turn_speed
             ),
             StmWiggle(),
-            StmMove(
-                distance=90,
-                speed=self.config.turn_speed,
-                angle=toggle_flip * -self.config.SERVO_TURN_ANGLE
-            ),
             StmTurn(
                 angle=toggle_flip * -90,
                 speed=self.config.turn_speed
