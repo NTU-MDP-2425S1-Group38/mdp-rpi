@@ -115,8 +115,10 @@ class TaskTwoRunner(metaclass=Singleton):
                 speed=self.config.turn_speed
             ),
             StmWiggle(),
+            StmWiggle(),
+            StmWiggle(),
             StmStraight(
-                distance=30, speed=self.config.turn_speed
+                distance=50, speed=self.config.turn_speed
             ),
             StmWiggle(),
             StmTurn(
