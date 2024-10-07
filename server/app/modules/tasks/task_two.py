@@ -100,7 +100,20 @@ class TaskTwoRunner(metaclass=Singleton):
         toggle_flip = 1 if direction=="left" else -1
 
         self.stm.send_stm_command(*[
-            # TODO set go around commands
+            StmTurn(
+                angle=toggle_flip * 70,
+                speed=self.config.turn_speed
+            ),
+            StmWiggle(),
+            StmTurn(
+                angle=toggle_flip * -70,
+                speed=self.config.turn_speed
+            ),
+            StmWiggle(),
+            StmTurn(
+                angle=toggle_flip * 90,
+                speed=self.config.turn_speed
+            )
         ])
 
     """
@@ -200,7 +213,7 @@ class TaskTwoRunner(metaclass=Singleton):
             # self.cm.slave_request_cv(Camera().capture(), self._step_four, ignore_bullseye=True)
         else:
             direction: Literal["left", "right"] = "left" if response.label == ObstacleLabel.Shape_Left else "right"
-            self._bypass_obstacle(direction)
+            self._go_around_obstacle(direction)
             self.stm.wait_receive()
 
     def _step_five(self) -> None:
@@ -239,7 +252,7 @@ class TaskTwoRunner(metaclass=Singleton):
     """
 
     def run(self) -> None:
-        self._step_one()
+        self._step_three()
 
 
 
