@@ -101,12 +101,12 @@ class TaskTwoRunner(metaclass=Singleton):
 
         self.stm.send_stm_command(*[
             StmTurn(
-                angle=toggle_flip * 70,
+                angle=toggle_flip * -70,
                 speed=self.config.turn_speed
             ),
             StmWiggle(),
             StmTurn(
-                angle=toggle_flip * -70,
+                angle=toggle_flip * 70,
                 speed=self.config.turn_speed
             ),
             StmWiggle(),

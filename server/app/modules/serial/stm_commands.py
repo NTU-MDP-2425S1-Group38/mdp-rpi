@@ -15,7 +15,7 @@ class StmCommand(ABC):
 
 class StmMoveToDistance(StmCommand):
 
-    def __init__(self, distance: int, forward:bool=True, speed:int=55):
+    def __init__(self, distance: int, forward:bool=True, speed:int=40):
         """
         :param distance: Distance to move to.
         :param forward: True if the robot should move forward to specified distance
