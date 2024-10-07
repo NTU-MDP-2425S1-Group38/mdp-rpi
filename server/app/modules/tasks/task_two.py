@@ -72,19 +72,19 @@ class TaskTwoRunner(metaclass=Singleton):
 
         self.stm.send_stm_command(*[
             StmMove(
-                distance=toggle_flip*45,
+                distance=45,
                 speed=self.config.turn_speed,
                 angle=toggle_flip * self.config.SERVO_TURN_ANGLE
             ),
             StmWiggle(),
             StmMove(
-                distance=toggle_flip * 90,
+                distance=90,
                 speed=self.config.turn_speed,
                 angle=toggle_flip * -self.config.SERVO_TURN_ANGLE
             ),
             StmWiggle(),
             StmMove(
-                distance=toggle_flip * 45,
+                distance=45,
                 speed=self.config.turn_speed,
                 angle=toggle_flip * self.config.SERVO_TURN_ANGLE
             ),
