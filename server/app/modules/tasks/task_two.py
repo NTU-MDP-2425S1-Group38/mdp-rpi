@@ -162,7 +162,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.stm.wait_receive()  # Wait for full execution of movement
         self.stm.send_stm_command(StmToggleMeasure())
         distance = self.stm.wait_receive()
-        print(distance)
+        self.logger.info(distance)
         # TODO process distance
 
         # Send CV request and pass step two as callback
@@ -199,14 +199,16 @@ class TaskTwoRunner(metaclass=Singleton):
 
         # Move to threshold distance
         self.stm.send_stm_command(StmToggleMeasure())
+        self.stm.wait_receive()
         self._move_backwards_to_front_threshold()
+        self.stm.wait_receive()
         self._move_to_front_threshold()
+        self.stm.wait_receive()
 
         # Get distance moved
-        self.stm.wait_receive()  # Wait for full execution of movement
         self.stm.send_stm_command(StmToggleMeasure())
         distance = self.stm.wait_receive()
-        print(distance)
+        self.logger.info(distance)
         # TODO process distance
 
         # Capture image and send callback
