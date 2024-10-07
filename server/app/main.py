@@ -17,12 +17,11 @@ from utils.logger import init_logger
 import uvicorn
 
 
-def run_web_server(ready_event: Event) -> None:
+def run_web_server() -> None:
     load_dotenv()
     init_logger()
     logging.getLogger().info("Starting server as main!")
     web_server = WebServer().get_web_server()
-    ready_event.set()  # Signal that the web server is ready
     uvicorn.run(
         web_server,
         host="0.0.0.0",
@@ -32,19 +31,17 @@ def run_web_server(ready_event: Event) -> None:
     )
 
 
-def run_bluetooth_server(ready_event: Event) -> None:
+def run_bluetooth_server() -> None:
     load_dotenv()
     init_logger()
     android = Android()
-    ready_event.set()  # Signal that the Bluetooth server is ready
     android.run()
 
 
-def run_stm(ready_event: Event) -> None:
+def run_stm() -> None:
     load_dotenv()
     init_logger()
     stm = STM()
-    ready_event.set()  # Signal that the STM is ready
     stm.connect()
 
 
