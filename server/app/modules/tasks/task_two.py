@@ -239,7 +239,8 @@ class TaskTwoRunner(metaclass=Singleton):
     """
 
     def run(self) -> None:
-        self._test()
+        self._step_one()
+
 
 
 
