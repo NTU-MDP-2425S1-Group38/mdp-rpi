@@ -206,7 +206,18 @@ class TaskTwoRunner(metaclass=Singleton):
         # Get distance moved
         self.stm.send_stm_command(StmToggleMeasure())
         distance = self.stm.wait_receive()
-        self.logger.info(distance)
+        self.logger.info(self.stm.wait_receive())
+        self.logger.info(self.stm.wait_receive())
+        self.logger.info(self.stm.wait_receive())
+        self.logger.info(self.stm.wait_receive())
+        self.logger.info(self.stm.wait_receive())
+        self.logger.info(self.stm.wait_receive())
+        self.logger.info(self.stm.wait_receive())
+        self.logger.info(self.stm.wait_receive())
+        self.logger.info(self.stm.wait_receive())
+        self.logger.info(self.stm.wait_receive())
+        self.logger.info(self.stm.wait_receive())
+        self.logger.info(self.stm.wait_receive())
         # TODO process distance
 
         # Capture image and send callback
