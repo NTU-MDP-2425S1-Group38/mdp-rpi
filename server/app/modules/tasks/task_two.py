@@ -60,7 +60,7 @@ class TaskTwoRunner(metaclass=Singleton):
             StmMoveToDistance(self.config.front_distance_threshold)
         )
 
-    def _move_backwards_to_safe_turn_threshold(self) -> None:
+    def _move_backwards_to_front_threshold(self) -> None:
         """
         Move backwards until a safe distance to maneuver.
         Assumes that the robot is already at front_distance_threshold
@@ -184,6 +184,7 @@ class TaskTwoRunner(metaclass=Singleton):
             direction: Literal["left","right"] = "left" if response.label == ObstacleLabel.Shape_Left else "right"
             self._bypass_obstacle(direction)
             self.stm.wait_receive()
+            self._step_three()
 
 
     def _step_three(self) -> None:
@@ -196,7 +197,7 @@ class TaskTwoRunner(metaclass=Singleton):
 
         # Move to threshold distance
         self.stm.send_stm_command(StmToggleMeasure())
-        self._move_backwards_to_safe_turn_threshold()
+        self._move_backwards_to_front_threshold()
         self._move_to_front_threshold()
 
         # Get distance moved
