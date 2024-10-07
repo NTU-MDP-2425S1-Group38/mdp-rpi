@@ -17,8 +17,6 @@ class TaskTwoRunner(metaclass=Singleton):
     """
 
     class ConfigManeuver:
-        front_distance_threshold: int = 35
-        turn_front_distance_threshold: int = 35
 
         forward_speed: int = 70
         turn_speed: int = 40
@@ -52,23 +50,23 @@ class TaskTwoRunner(metaclass=Singleton):
         """
         self.stm.send_stm_command(StmWiggle())
 
-    def _move_to_front_threshold(self) -> None:
+    def _move_forward_to_distance(self, distance: int) -> None:
         """
         Move forward until the "front_distance_threshold"
         :return:
         """
         self.stm.send_stm_command(
-            StmMoveToDistance(self.config.front_distance_threshold)
+            StmMoveToDistance(distance=distance)
         )
 
-    def _move_backwards_to_front_threshold(self) -> None:
+    def _move_backwards_to_distance(self, distance: int) -> None:
         """
         Move backwards until a safe distance to maneuver.
         Assumes that the robot is already at front_distance_threshold
         :return:
         """
         self.stm.send_stm_command(
-            StmMoveToDistance(self.config.turn_front_distance_threshold, forward=False)
+            StmMoveToDistance(distance, forward=False)
         )
 
     def _bypass_obstacle(self, direction:Literal["left", "right"]) -> None:
@@ -156,7 +154,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.stm.send_stm_command(StmToggleMeasure())
 
         # Move to obstacle
-        self._move_to_front_threshold()
+        self._move_forward_to_distance(35)
 
         # Get distance moved
         self.stm.wait_receive()  # Wait for full execution of movement
@@ -200,9 +198,9 @@ class TaskTwoRunner(metaclass=Singleton):
         # Move to threshold distance
         self.stm.send_stm_command(StmToggleMeasure())
         self.stm.wait_receive()
-        self._move_backwards_to_front_threshold()
+        self._move_backwards_to_distance(30)
         self.stm.wait_receive()
-        self._move_to_front_threshold()
+        self._move_forward_to_distance(30)
         self.stm.wait_receive()
 
         # Get distance moved
@@ -260,7 +258,7 @@ class TaskTwoRunner(metaclass=Singleton):
         1. Move to carpark
         :return:
         """
-        self._move_to_front_threshold()
+        self._move_forward_to_distance(10)
 
 
     """
@@ -269,8 +267,3 @@ class TaskTwoRunner(metaclass=Singleton):
 
     def run(self) -> None:
         self._step_one()
-
-
-
-
-
