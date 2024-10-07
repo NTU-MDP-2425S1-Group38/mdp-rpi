@@ -240,7 +240,7 @@ class TaskTwoRunner(metaclass=Singleton):
         """
         distance_to_backtrack = self.distance_to_backtrack
         self.stm.send_stm_command(
-            StmMove(distance=distance_to_backtrack)
+            StmMove(distance=70)
         )
         self.stm.wait_receive()
         self._step_six()
@@ -251,8 +251,11 @@ class TaskTwoRunner(metaclass=Singleton):
         1. Align with carpark
         :return:
         """
-        self.stm.send_stm_command()
-        self.stm.wait_receive()
+        self.stm.send_stm_command(*[
+            StmTurn(angle=70, speed=self.config.turn_speed),
+            StmTurn(angle=-70, speed=self.config.turn_speed),
+        ])
+        self._step_seven()
 
     def _step_seven(self) -> None:
         """
