@@ -54,10 +54,7 @@ class StmMove(StmCommand):
 class StmWiggle(StmCommand):
 
     def to_serial(self) -> str:
-        res = ""
-        res += StmMove(0, angle=-10, speed=0).to_serial()
-        res += StmMove(0, angle=0, speed=0).to_serial()
-        return res
+        return StmMove(0, angle=-10, speed=0).to_serial()
 
 
 class StmToggleMeasure(StmCommand):

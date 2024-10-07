@@ -19,9 +19,9 @@ class TaskTwoRunner(metaclass=Singleton):
         front_distance_threshold: int = 20
         turn_front_distance_threshold: int = 20
 
-        bypass_turn_angle:int = 25
-        bypass_turn_distance:int = 20
-        bypass_turn_speed:int = 20
+        turn_speed: int = 50
+
+        SERVO_TURN_ANGLE = 25
 
     def __init__(self):
         self.logger = logging.getLogger("TaskTwoRunner")
@@ -68,25 +68,25 @@ class TaskTwoRunner(metaclass=Singleton):
         )
 
     def _bypass_obstacle(self, direction:Literal["left", "right"]) -> None:
-        toggle_flip = 1 if direction=="left" else -1
+        toggle_flip = 1 if direction=="right" else -1
 
         self.stm.send_stm_command(*[
             StmMove(
-                distance=self.config.bypass_turn_distance,
-                speed=self.config.bypass_turn_speed,
-                angle=toggle_flip * self.config.bypass_turn_angle
+                distance=toggle_flip*45,
+                speed=self.config.turn_speed,
+                angle=toggle_flip * self.config.SERVO_TURN_ANGLE
             ),
             StmWiggle(),
             StmMove(
-                distance=self.config.bypass_turn_distance,
-                speed=self.config.bypass_turn_speed,
-                angle=toggle_flip * -self.config.bypass_turn_angle
+                distance=toggle_flip * -90,
+                speed=self.config.turn_speed,
+                angle=toggle_flip * self.config.SERVO_TURN_ANGLE
             ),
             StmWiggle(),
             StmMove(
-                distance=self.config.bypass_turn_distance // 2,
-                speed=self.config.bypass_turn_speed,
-                angle=toggle_flip * self.config.bypass_turn_angle // 2
+                distance=toggle_flip * 45,
+                speed=self.config.turn_speed,
+                angle=toggle_flip * self.config.SERVO_TURN_ANGLE
             ),
             StmWiggle()
         ])
