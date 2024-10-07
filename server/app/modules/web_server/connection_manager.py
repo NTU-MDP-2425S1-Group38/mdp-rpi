@@ -129,8 +129,10 @@ class ConnectionManager(metaclass=Singleton):
         req = SlaveWorkRequest(
             id=req_id,
             type=SlaveWorkRequestType.ImageRecognition,
-            payload=SlaveWorkRequestPayloadImageRecognition(image=image),
-            ignore_bullseye=ignore_bullseye
+            payload=SlaveWorkRequestPayloadImageRecognition(
+                image=image,
+                ignore_bullseye=ignore_bullseye
+            ),
         ).model_dump_json()
 
         tasks = [asyncio.create_task(c.send_text(req)) for c in self.connections]

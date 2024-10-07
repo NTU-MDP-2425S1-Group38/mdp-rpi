@@ -29,11 +29,12 @@ class SlaveWorkRequestPayloadAlgo(BaseModel):
 
 class SlaveWorkRequestPayloadImageRecognition(BaseModel):
     image: str  # Base64 encoded image (UTF-8)
+    ignore_bullseye: bool = Field(default=False)
 
 
 class SlaveWorkRequest(BaseModel):
     id:str = Field(default="")
     type: SlaveWorkRequestType
     payload: Union[SlaveWorkRequestPayloadAlgo, SlaveWorkRequestPayloadImageRecognition]
-    ignore_bullseye:bool = Field(default=False)
+
 
