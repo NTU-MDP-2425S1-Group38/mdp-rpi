@@ -230,7 +230,8 @@ class TaskTwoRunner(metaclass=Singleton):
         else:
             direction: Literal["left", "right"] = "left" if response.label == ObstacleLabel.Shape_Left else "right"
             self._go_around_obstacle(direction)
-            self.stm.wait_receive()
+            self._step_five()
+
 
     def _step_five(self) -> None:
         """
