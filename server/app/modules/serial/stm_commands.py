@@ -82,7 +82,7 @@ class StmTurn(StmCommand):
             else:
                 servo_angle = 25
 
-        return StmMove(distance=self.angle, angle=servo_angle, speed=self.speed).to_serial()
+        return StmMove(distance=abs(self.angle), angle=servo_angle, speed=self.speed).to_serial()
 
 
 class StmStraight(StmCommand):
