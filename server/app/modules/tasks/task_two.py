@@ -16,8 +16,8 @@ class TaskTwoRunner(metaclass=Singleton):
     """
 
     class ConfigManeuver:
-        front_distance_threshold: int = 40
-        turn_front_distance_threshold: int = 40
+        front_distance_threshold: int = 30
+        turn_front_distance_threshold: int = 30
 
         forward_speed: int = 70
         turn_speed: int = 40
@@ -101,12 +101,12 @@ class TaskTwoRunner(metaclass=Singleton):
 
         self.stm.send_stm_command(*[
             StmTurn(
-                angle=toggle_flip * -70,
+                angle=toggle_flip * -80,
                 speed=self.config.turn_speed
             ),
             StmWiggle(),
             StmTurn(
-                angle=toggle_flip * 70,
+                angle=toggle_flip * 80,
                 speed=self.config.turn_speed
             ),
             StmWiggle(),
