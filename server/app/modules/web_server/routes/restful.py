@@ -30,4 +30,5 @@ async def capture():
 @rest_endpoints.post("/task/2")
 async def start_task_two():
     GameState().run(2)
+    return ""
 

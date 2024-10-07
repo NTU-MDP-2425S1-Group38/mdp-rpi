@@ -27,6 +27,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.logger = logging.getLogger("TaskTwoRunner")
         self.cm = ConnectionManager()
         self.stm = STM()
+        self.stm.connect()
         self.config = self.ConfigManeuver()
 
         """
