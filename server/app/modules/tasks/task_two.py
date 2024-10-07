@@ -16,8 +16,8 @@ class TaskTwoRunner(metaclass=Singleton):
     """
 
     class ConfigManeuver:
-        front_distance_threshold: int = 30
-        turn_front_distance_threshold: int = 30
+        front_distance_threshold: int = 35
+        turn_front_distance_threshold: int = 35
 
         forward_speed: int = 70
         turn_speed: int = 40
