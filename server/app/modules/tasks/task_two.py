@@ -113,6 +113,11 @@ class TaskTwoRunner(metaclass=Singleton):
     six -> Slot back into carpark
     """
 
+    def _test(self) -> None:
+        self.stm.send_stm_command(
+            StmMoveToDistance(10)
+        )
+
     def _step_one(self) -> None:
         """
         STEP ONE
@@ -234,7 +239,7 @@ class TaskTwoRunner(metaclass=Singleton):
     """
 
     def run(self) -> None:
-        self._step_one()
+        self._test()
 
 
 

@@ -1,3 +1,5 @@
+import logging
+
 from utils.metaclass.singleton import Singleton
 from .configuration import BAUD_RATE, SERIAL_PORT
 from pathlib import Path
@@ -20,6 +22,7 @@ class STM(metaclass=Singleton):
         """
         self.serial_link = None
         self.received = []
+        self.logger = logging.getLogger("STM")
 
     def connect(self):
         """Connect to STM32 using serial UART connection, given the serial port and the baud rate"""
@@ -39,7 +42,7 @@ class STM(metaclass=Singleton):
             message (str): message to send
         """
         self.serial_link.write(bytes(message, "utf-8"))
-        print("Sent to STM32:", str(message).rstrip())
+        self.logger.info(f"Sent to STM32: {str(message).rstrip()}")
 
     def send_stm_command(self, *stm_commands:StmCommand) -> None:
         """
