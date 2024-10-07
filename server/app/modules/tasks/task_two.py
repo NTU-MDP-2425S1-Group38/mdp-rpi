@@ -118,6 +118,7 @@ class TaskTwoRunner(metaclass=Singleton):
             StmStraight(
                 distance=20, speed=self.config.turn_speed
             ),
+            StmWiggle(),
             StmTurn(
                 angle=toggle_flip * 90,
                 speed=self.config.turn_speed
@@ -195,6 +196,7 @@ class TaskTwoRunner(metaclass=Singleton):
 
         # Move to threshold distance
         self.stm.send_stm_command(StmToggleMeasure())
+        self._move_backwards_to_safe_turn_threshold()
         self._move_to_front_threshold()
 
         # Get distance moved
@@ -261,7 +263,7 @@ class TaskTwoRunner(metaclass=Singleton):
     """
 
     def run(self) -> None:
-        self._step_three()
+        self._step_one()
 
 
 
