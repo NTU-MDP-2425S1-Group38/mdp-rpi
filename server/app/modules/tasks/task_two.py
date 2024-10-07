@@ -115,7 +115,7 @@ class TaskTwoRunner(metaclass=Singleton):
 
     def _test(self) -> None:
         self.stm.send_stm_command(
-            StmMove(10)
+            StmMoveToDistance(10)
         )
 
     def _step_one(self) -> None:
