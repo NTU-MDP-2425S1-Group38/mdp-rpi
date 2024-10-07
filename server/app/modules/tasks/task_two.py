@@ -5,7 +5,7 @@ from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
 from modules.camera.camera import Camera
 from modules.serial import STM
-from modules.serial.stm_commands import StmMoveToDistance, StmMove, StmWiggle, StmToggleMeasure
+from modules.serial.stm_commands import StmMoveToDistance, StmMove, StmWiggle, StmToggleMeasure, StmTurn
 from modules.web_server.connection_manager import ConnectionManager
 from utils.metaclass.singleton import Singleton
 
@@ -23,6 +23,8 @@ class TaskTwoRunner(metaclass=Singleton):
         turn_speed: int = 70
 
         SERVO_TURN_ANGLE = 25
+
+        BYPASS_DISTANCE: int = 105  # Distance used to bypass an obstacle
 
     def __init__(self):
         self.logger = logging.getLogger("TaskTwoRunner")
@@ -72,10 +74,9 @@ class TaskTwoRunner(metaclass=Singleton):
         toggle_flip = 1 if direction=="right" else -1
 
         self.stm.send_stm_command(*[
-            StmMove(
-                distance=45,
-                speed=self.config.turn_speed,
-                angle=toggle_flip * self.config.SERVO_TURN_ANGLE
+            StmTurn(
+                angle=toggle_flip * 45,
+                speed=self.config.turn_speed
             ),
             StmWiggle(),
             StmMove(
@@ -83,11 +84,14 @@ class TaskTwoRunner(metaclass=Singleton):
                 speed=self.config.turn_speed,
                 angle=toggle_flip * -self.config.SERVO_TURN_ANGLE
             ),
+            StmTurn(
+                angle=toggle_flip * -90,
+                speed=self.config.turn_speed
+            ),
             StmWiggle(),
-            StmMove(
-                distance=45,
-                speed=self.config.turn_speed,
-                angle=toggle_flip * self.config.SERVO_TURN_ANGLE
+            StmTurn(
+                angle=toggle_flip * 45,
+                speed=self.config.turn_speed
             ),
             StmWiggle()
         ])

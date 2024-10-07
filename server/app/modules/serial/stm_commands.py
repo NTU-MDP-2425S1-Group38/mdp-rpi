@@ -32,6 +32,9 @@ class StmMoveToDistance(StmCommand):
 
 
 class StmMove(StmCommand):
+    """
+    Command to move forward
+    """
 
     def __init__(
             self,
@@ -55,6 +58,47 @@ class StmWiggle(StmCommand):
 
     def to_serial(self) -> str:
         return StmMove(0, angle=-10, speed=0).to_serial()
+
+
+class StmTurn(StmCommand):
+
+    def __init__(
+            self,
+            angle: int,
+            speed: int,
+            forward: bool = True
+    ):
+        self.angle = angle
+        self.speed = speed
+        self.forward = forward
+
+    def to_serial(self) -> str:
+
+        servo_angle = 0
+
+        if self.angle != 0:
+            if self.angle < 0:
+                servo_angle = -25
+            else:
+                servo_angle = 25
+
+        return StmMove(distance=self.angle, angle=servo_angle, speed=self.speed).to_serial()
+
+
+class StmStraight(StmCommand):
+
+    def __init__(
+            self,
+            distance: int,
+            speed: int,
+            forward: bool = True
+    ):
+        self.distance = distance
+        self.speed = speed
+        self.forward = forward
+
+    def to_serial(self) -> str:
+        return StmMove(distance=self.distance, angle=0, speed=self.speed, forward=self.forward).to_serial()
 
 
 class StmToggleMeasure(StmCommand):
