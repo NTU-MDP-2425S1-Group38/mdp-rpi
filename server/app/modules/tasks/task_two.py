@@ -39,8 +39,8 @@ class TaskTwoRunner(metaclass=Singleton):
         self.stm.connect()
 
         self.logger.info("Instantiating Android and connecting")
-        self.android = Android()
-        self.android.connect()
+        # self.android = Android()
+        # self.android.connect()
 
         self.config = self.ConfigManeuver()
 
@@ -296,7 +296,7 @@ class TaskTwoRunner(metaclass=Singleton):
         """
         self.logger.info("Executing COMPLETE")
 
-        self.android.send(AndroidMessage("status", "finish"))
+        # self.android.send(AndroidMessage("status", "finish"))
 
 
     """

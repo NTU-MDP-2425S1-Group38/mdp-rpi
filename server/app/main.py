@@ -34,8 +34,8 @@ def run_web_server() -> None:
 def run_bluetooth_server() -> None:
     load_dotenv()
     init_logger()
-    android = Android()
-    android.run()
+    # android = Android()
+    # android.run()
 
 
 def run_stm() -> None:
