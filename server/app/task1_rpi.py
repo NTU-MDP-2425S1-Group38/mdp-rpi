@@ -466,6 +466,7 @@ class Task1RPI:
             # Retrieve next movement command
             command: str = self.command_queue.get()
             self.logger.debug("wait for unpause")
+            self.logger.debug(command)
             # Wait for unpause event to be true [Main Trigger]
             try:
                 self.logger.debug("wait for retrylock")
