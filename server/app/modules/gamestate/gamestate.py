@@ -15,7 +15,6 @@ from app_types.primatives.command import (
 )
 from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
-from modules.serial import STM, Android
 from modules.serial.android import AndroidMessage
 from modules.tasks.task_two import TaskTwoRunner
 from utils.instructions import Instructions
