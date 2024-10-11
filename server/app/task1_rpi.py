@@ -487,7 +487,7 @@ class Task1RPI:
                 self.logger.info("WIGGLE")
                 flag = "T"
                 angle = -25
-                val = 1
+                val = 2
                 self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
 
             elif isinstance(command["value"], dict) and command["value"]["move"] in [
