@@ -5,8 +5,7 @@ from typing import Literal, Callable
 from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
 from modules.camera.camera import Camera
-from modules.serial import STM, Android
-from modules.serial.android import AndroidMessage
+from modules.serial import STM
 from modules.serial.stm_commands import (
     StmMoveToDistance,
     StmMove,
