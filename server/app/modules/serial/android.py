@@ -5,12 +5,13 @@ import socket
 import sys
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import bluetooth
 
 # from modules.gamestate import GameState
 from modules.serial import STM
+from modules.tasks.task_two import TaskTwoRunner
 
 from utils.metaclass.singleton import Singleton
 from app_types.obstacle import Obstacle
@@ -140,7 +141,7 @@ class Android(metaclass=Singleton):
         except Exception as e:
             self.logger.error(f"Failed to disconnect bluetooth: {str(e)}")
 
-    def send(self, message: AndroidMessage):
+    def send(self, message: Union[AndroidMessage, str]):
         """Send message to Android"""
         try:
             # Default code to send a message to Android. - Bryan
@@ -292,6 +293,14 @@ class Android(metaclass=Singleton):
             if message_rcv is None:
                 continue
 
+    def _task_two_complete(self) -> None:
+        """
+        Method to called as a callback once task two has completed
+        :return:
+        """
+
+        self.send("STOP")
+
     def run_task_2(self) -> None:
         """
         Main running function in a while loop
@@ -311,7 +320,7 @@ class Android(metaclass=Singleton):
                 if "BEGIN" in message_rcv:
                     # Begin Task 2
                     self.logger.info("Beginning task 2!")
-                    # TaskTwoRunner().run()
+                    TaskTwoRunner().run(self._task_two_complete)
 
             except OSError:
                 # self.android_dropped.set()

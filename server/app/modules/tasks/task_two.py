@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Literal
+from typing import Literal, Callable
 
 from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
@@ -53,6 +53,8 @@ class TaskTwoRunner(metaclass=Singleton):
         # self.android.connect()
 
         self.config = self.ConfigManeuver()
+
+        self.end_callback: Callable[[], None] = lambda: None
 
         """
         Keeps track of distance the robot has to move in a straight line before allowing to turn back in line
@@ -287,12 +289,13 @@ class TaskTwoRunner(metaclass=Singleton):
         :return:
         """
         self.logger.info("Executing COMPLETE")
-
+        self.end_callback()
         # self.android.send(AndroidMessage("status", "finish"))
 
     """
     ENTRYPOINT
     """
 
-    def run(self) -> None:
+    def run(self, callback:Callable[[], None] = lambda: None) -> None:
+        self.end_callback = callback
         self._step_one()
