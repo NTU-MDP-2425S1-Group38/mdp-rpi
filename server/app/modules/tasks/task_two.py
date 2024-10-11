@@ -34,7 +34,7 @@ class TaskTwoRunner(metaclass=Singleton):
         )
 
         STEP_THREE_CLOSEUP_DISTANCE: int = (
-            30  # Distance for the robot to MOVE_FORWARD to the second obstacle
+            20  # Distance for the robot to MOVE_FORWARD to the second obstacle
         )
         FALLBACK_STEP_THREE_DISTANCE: int = 80
 
@@ -154,7 +154,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.stm.send_stm_command(StmToggleMeasure())
 
         # Move to obstacle
-        self._move_forward_to_distance(40)
+        self._move_forward_to_distance(30)
 
         # Send CV request and pass step two as callback
         self.cm.slave_request_cv(Camera().capture(), self._step_two)
@@ -276,7 +276,7 @@ class TaskTwoRunner(metaclass=Singleton):
                 StmTurn(angle=toggle_flip * 80, speed=self.config.turn_speed),
                 StmTurn(angle=toggle_flip * -80, speed=self.config.turn_speed),
                 # Close into car park
-                StmMoveToDistance(distance=10),
+                StmMoveToDistance(distance=20),
             ]
         )
 
