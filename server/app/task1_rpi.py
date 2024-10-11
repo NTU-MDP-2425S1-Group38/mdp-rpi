@@ -483,7 +483,14 @@ class Task1RPI:
             flag = ""
             val = 0
 
-            if isinstance(command["value"], dict) and command["value"]["move"] in [
+            if command == "WIGGLE":
+                self.logger.info("WIGGLE")
+                flag = "T"
+                angle = -25
+                val = 0
+                self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
+
+            elif isinstance(command["value"], dict) and command["value"]["move"] in [
                 "FORWARD",
                 "BACKWARD",
             ]:
@@ -519,15 +526,11 @@ class Task1RPI:
                 elif command["value"] == "BACKWARD_RIGHT":
                     flag = "t"
                     angle = self.drive_angle
-                elif command["value"] == "WIGGLE":
-                    flag = "T"
-                    angle = -25
-                    val = 0
                 if (
                     command["value"] == "FORWARD_RIGHT"
                     or command["value"] == "BACKWARD_RIGHT"
                 ):
-                    prepend_to_queue(self.command_queue, {"value": "WIGGLE"})
+                    prepend_to_queue(self.command_queue, "WIGGLE")
                     self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
                 else:
                     self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
