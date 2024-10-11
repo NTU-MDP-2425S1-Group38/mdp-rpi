@@ -265,9 +265,9 @@ class TaskTwoRunner(metaclass=Singleton):
         """
         toggle_flip = 1 if arrow_direction == "left" else -1
 
+        self.logger.info(f"Backtrack distance: {self.distance_to_backtrack}")
         self.stm.send_stm_command(
             *[
-                self.logger.info(f"Backtrack distance: {self.distance_to_backtrack}"),
                 # Move backtrack distance
                 StmStraight(
                     distance=self.distance_to_backtrack, speed=self.config.forward_speed
