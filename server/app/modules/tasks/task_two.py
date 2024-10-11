@@ -30,7 +30,7 @@ class TaskTwoRunner(metaclass=Singleton):
 
         SERVO_TURN_ANGLE = 25
         BYPASS_DISTANCE: int = (
-            60  # Distance used to bypass an obstacle (in the entire turning process)
+            70  # Distance used to bypass an obstacle (in the entire turning process)
         )
 
         STEP_THREE_CLOSEUP_DISTANCE: int = (
@@ -154,7 +154,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.stm.send_stm_command(StmToggleMeasure())
 
         # Move to obstacle
-        self._move_forward_to_distance(40)
+        self._move_forward_to_distance(50)
 
         # Send CV request and pass step two as callback
         self.cm.slave_request_cv(Camera().capture(), self._step_two)
