@@ -79,6 +79,21 @@ class PiAction:
         return self._value
 
 
+# Example: Prepend item to the start of the queue
+def prepend_to_queue(queue, item):
+    # Extract all existing items from the queue
+    temp_items = []
+    while not queue.empty():
+        temp_items.append(queue.get())
+
+    # Add the new item at the start
+    queue.put(item)
+
+    # Add back all the other items in the original order
+    for temp_item in temp_items:
+        queue.put(temp_item)
+
+
 class Task1RPI:
     """
     Class that represents the Raspberry Pi.
@@ -503,12 +518,16 @@ class Task1RPI:
                 elif command["value"] == "BACKWARD_RIGHT":
                     flag = "t"
                     angle = self.drive_angle
+                elif command["value"] == "WIGGLE":
+                    flag = "T"
+                    angle = -25
+                    val = 0
                 if (
                     command["value"] == "FORWARD_RIGHT"
                     or command["value"] == "BACKWARD_RIGHT"
                 ):
+                    prepend_to_queue(self.command_queue, "WIGGLE")
                     self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
-                    self.stm.send_cmd("T", 0, -25, 0)
                 else:
                     self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
 
