@@ -526,7 +526,7 @@ class Task1RPI:
                     command["value"] == "FORWARD_RIGHT"
                     or command["value"] == "BACKWARD_RIGHT"
                 ):
-                    prepend_to_queue(self.command_queue, "WIGGLE")
+                    prepend_to_queue(self.command_queue, {"value": "WIGGLE"})
                     self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
                 else:
                     self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
