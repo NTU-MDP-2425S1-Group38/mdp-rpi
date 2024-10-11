@@ -18,6 +18,7 @@ from app_types.primatives.position import Position
 
 from .link import Link
 from ..gamestate import GameState
+from ..tasks.task_two import TaskTwoRunner
 
 
 class AndroidMessage:
@@ -314,7 +315,7 @@ class Android(metaclass=Singleton):
                 if "BEGIN" in message_rcv:
                     # Begin Task 2
                     self.logger.info("Beginning task 2!")
-                    GameState().run(2)
+                    TaskTwoRunner().run()
 
             except OSError:
                 # self.android_dropped.set()
