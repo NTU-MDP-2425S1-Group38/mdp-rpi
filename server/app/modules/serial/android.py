@@ -17,6 +17,7 @@ from app_types.obstacle import Obstacle
 from app_types.primatives.position import Position
 
 from .link import Link
+from ..gamestate import GameState
 
 
 class AndroidMessage:
@@ -306,15 +307,19 @@ class Android(metaclass=Singleton):
         while True:
             message_rcv = None
             try:
-                message_rcv = self.android.receive()
+                message_rcv = self.receive()
+
+                self.logger.info(f"Received {message_rcv}!")
 
                 if "BEGIN" in message_rcv:
                     # Begin Task 2
-                    self.logger.info("Beginning run.")
-                    self.start()
+                    self.logger.info("Beginning task 2!")
+                    GameState().run(2)
 
             except OSError:
-                self.android_dropped.set()
-                print("Event set: Bluetooth connection dropped")
+                # self.android_dropped.set()
+                self.logger.warning("Bluetooth connection dropped. Reconnecting!")
+                self.connect()
+
             if message_rcv is None:
                 continue
