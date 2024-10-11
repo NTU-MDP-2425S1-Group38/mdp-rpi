@@ -154,7 +154,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.stm.send_stm_command(StmToggleMeasure())
 
         # Move to obstacle
-        self._move_forward_to_distance(30)
+        self._move_forward_to_distance(40)
 
         # Send CV request and pass step two as callback
         self.cm.slave_request_cv(Camera().capture(), self._step_two)
