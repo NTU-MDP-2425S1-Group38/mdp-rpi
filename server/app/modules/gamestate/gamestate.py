@@ -135,9 +135,9 @@ class GameState(metaclass=Singleton):
         self.obstacles[obstacle_index].label = cv_response.label
 
         # DONE update android of updated label
-        self.android.send(
-            AndroidMessage("TARGET", f"{obstacle_index},{cv_response.label.value}")
-        )
+        # self.android.send(
+        #     AndroidMessage("TARGET", f"{obstacle_index},{cv_response.label.value}")
+        # )
 
     def capture_and_update_label(self, obstacle_id: int) -> None:
         self.capture_and_process_image(
