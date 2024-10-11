@@ -519,19 +519,21 @@ class Task1RPI:
                     angle = -self.drive_angle
                 elif command["value"] == "FORWARD_RIGHT":
                     flag = "T"
-                    angle = self.drive_angle + 1
+                    angle = self.drive_angle
                 elif command["value"] == "BACKWARD_LEFT":
                     flag = "t"
                     angle = -self.drive_angle
                 elif command["value"] == "BACKWARD_RIGHT":
                     flag = "t"
-                    angle = self.drive_angle + 1
+                    angle = self.drive_angle
                 if (
                     command["value"] == "FORWARD_RIGHT"
                     or command["value"] == "BACKWARD_RIGHT"
                 ):
                     prepend_to_queue(self.command_queue, "WIGGLE")
-                    self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
+                    self.stm.send_cmd(
+                        flag, int(self.drive_speed), int(angle), int(val) + 1
+                    )
                 else:
                     self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
 
