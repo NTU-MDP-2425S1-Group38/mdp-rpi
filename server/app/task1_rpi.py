@@ -490,7 +490,7 @@ class Task1RPI:
                 "BACKWARD_LEFT",
                 "BACKWARD_RIGHT",
             ]:
-                val = 85
+                val = 86
                 if command["value"] == "FORWARD_LEFT":
                     flag = "T"
                     angle = -self.drive_angle
@@ -503,7 +503,14 @@ class Task1RPI:
                 elif command["value"] == "BACKWARD_RIGHT":
                     flag = "t"
                     angle = self.drive_angle
-                self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
+                if (
+                    command["value"] == "FORWARD_RIGHT"
+                    or command["value"] == "BACKWARD_RIGHT"
+                ):
+                    self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
+                    self.stm.send_cmd("T", 0, -25, 0)
+                else:
+                    self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
 
             elif command["value"] == "CAPTURE_IMAGE":
                 flag = "S"
@@ -615,8 +622,12 @@ class Task1RPI:
         self.logger.info(f"results: {results}")
         self.logger.info(f"self.obstacles: {self.obstacles}")
         self.logger.info(
-            f"Image recognition results: {results} ({SYMBOL_MAP.get(results['image_id'])})"
+            f"Image recognition results: {results} ({results['image_id']})"
         )
+
+        # self.logger.info(
+        #     f"Image recognition results: {results} ({SYMBOL_MAP.get(results['image_id'])})"
+        # )
 
         if results["image_id"] == "NA":
             self.failed_obstacles.append(self.obstacles[int(results["obstacle_id"])])
