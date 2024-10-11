@@ -30,7 +30,7 @@ class TaskTwoRunner(metaclass=Singleton):
 
         SERVO_TURN_ANGLE = 25
         BYPASS_DISTANCE: int = (
-            105  # Distance used to bypass an obstacle (in the entire turning process)
+            60  # Distance used to bypass an obstacle (in the entire turning process)
         )
 
         STEP_THREE_CLOSEUP_DISTANCE: int = (
@@ -178,7 +178,7 @@ class TaskTwoRunner(metaclass=Singleton):
                 "left" if response.label == ObstacleLabel.Shape_Left else "right"
             )
             self._bypass_obstacle(direction)
-            self.distance_to_backtrack += self.config.BYPASS_DISTANCE // 2
+            self.distance_to_backtrack += (self.config.BYPASS_DISTANCE // 2)
             self.stm.wait_receive()
             self._step_three()
 
