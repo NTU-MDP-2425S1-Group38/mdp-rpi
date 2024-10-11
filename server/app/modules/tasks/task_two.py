@@ -34,7 +34,7 @@ class TaskTwoRunner(metaclass=Singleton):
         )
 
         STEP_THREE_CLOSEUP_DISTANCE: int = (
-            20  # Distance for the robot to MOVE_FORWARD to the second obstacle
+            30  # Distance for the robot to MOVE_FORWARD to the second obstacle
         )
         FALLBACK_STEP_THREE_DISTANCE: int = 80
 
@@ -93,8 +93,10 @@ class TaskTwoRunner(metaclass=Singleton):
             *[
                 StmTurn(angle=toggle_flip * 45, speed=self.config.turn_speed),
                 StmWiggle(),
+                StmStraight(10, 40),
                 StmTurn(angle=toggle_flip * -90, speed=self.config.turn_speed),
                 StmWiggle(),
+                StmStraight(10, 40),
                 StmTurn(angle=toggle_flip * 45, speed=self.config.turn_speed),
                 StmWiggle(),
             ]
