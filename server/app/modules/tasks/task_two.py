@@ -154,7 +154,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.stm.send_stm_command(StmToggleMeasure())
 
         # Move to obstacle
-        self._move_forward_to_distance(50)
+        self._move_forward_to_distance(35)
 
         # Send CV request and pass step two as callback
         self.cm.slave_request_cv(Camera().capture(), self._step_two)
@@ -213,6 +213,7 @@ class TaskTwoRunner(metaclass=Singleton):
             return
 
         # Move to threshold distance
+        self.stm.send_stm_command(StmStraight(5, 30, False))
         self.stm.send_stm_command(StmToggleMeasure())
         self.stm.wait_receive()
         self._move_forward_to_distance(self.config.STEP_THREE_CLOSEUP_DISTANCE)
