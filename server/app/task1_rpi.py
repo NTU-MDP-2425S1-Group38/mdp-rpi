@@ -613,8 +613,8 @@ class Task1RPI:
                 self.logger.info(f"Image recognition results: {results}")
 
         # release lock so that bot can continue moving
-        self.movement_lock.release()
         try:
+            self.movement_lock.release()
             self.retrylock.release()
         except:
             pass
