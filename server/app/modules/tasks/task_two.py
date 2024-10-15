@@ -189,7 +189,7 @@ class TaskTwoRunner(metaclass=Singleton):
 
     def _test(self) -> None:
         for _ in range(5):
-            self.stm.send_stm_command_and_wait(StmSideHug(threshold=60, speed=40))
+            self.stm.send_stm_command_and_wait(StmSideHug(threshold=60, speed=40, side="right"))
 
     def _step_one(self) -> None:
         """
