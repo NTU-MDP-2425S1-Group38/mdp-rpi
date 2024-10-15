@@ -155,7 +155,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.stm.wait_receive()
 
         # Move to end of obstacle
-        self.stm.send_stm_command(StmSideHug(hug_side, threshold=50, speed=self.config.turn_speed))
+        self.stm.send_stm_command_and_wait(StmSideHug(hug_side, threshold=50, speed=self.config.turn_speed))
 
         # Get distance covered
         self.stm.send_stm_command(StmToggleMeasure())
