@@ -92,7 +92,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.logger.info(f"Received: {payload}")
         try:
             dist_str = payload.replace("fD", "").strip()
-            return int(float(dist_str.split("\\")[0]))
+            return int(float(dist_str))
         except Exception:
             self.logger.warning("Unable to parse distance! Returning 0!")
             return 0

@@ -81,7 +81,7 @@ class STM(metaclass=Singleton):
         while True:
             if self.serial_link.in_waiting > 0:
                 payload = str(self.serial_link.read_all(), "utf-8")
-                self.logger.info(f"Received: {payload}")
+                self.logger.info(f"Received: {payload.strip()}")
                 return payload
 
     def run_task_1(self):
