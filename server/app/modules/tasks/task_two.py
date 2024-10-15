@@ -170,7 +170,10 @@ class TaskTwoRunner(metaclass=Singleton):
         self.config.OBSTACLE_WIDTH = width
 
         # Right turn
-        self.stm.send_stm_command(StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed))
+        self.stm.send_stm_command_and_wait(*[
+            StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed),
+            StmWiggle()
+        ])
 
 
 
