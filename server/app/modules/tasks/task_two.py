@@ -2,6 +2,8 @@ import logging
 import time
 from typing import Literal, Callable
 
+from scipy.special.cython_special import spence
+
 from app_types.primatives.cv import CvResponse
 from app_types.primatives.obstacle_label import ObstacleLabel
 from modules.camera.camera import Camera
@@ -12,7 +14,7 @@ from modules.serial.stm_commands import (
     StmWiggle,
     StmToggleMeasure,
     StmTurn,
-    StmStraight,
+    StmStraight, StmSideHug,
 )
 from modules.web_server.connection_manager import ConnectionManager
 from utils.metaclass.singleton import Singleton
@@ -32,10 +34,11 @@ class TaskTwoRunner(metaclass=Singleton):
             70  # Distance used to bypass an obstacle (in the entire turning process)
         )
 
-        STEP_THREE_CLOSEUP_DISTANCE: int = (
-            30  # Distance for the robot to MOVE_FORWARD to the second obstacle
-        )
+        STEP_THREE_CLOSEUP_DISTANCE: int  # Distance for the robot to MOVE_FORWARD to the second obstacle
         FALLBACK_STEP_THREE_DISTANCE: int = 80
+
+        def __init__(self):
+            self.BYPASS_DISTANCE = 30
 
     def __init__(self):
         self.logger = logging.getLogger("TaskTwoRunner")
@@ -116,20 +119,28 @@ class TaskTwoRunner(metaclass=Singleton):
         """
         toggle_flip = 1 if direction == "left" else -1
 
+        hug_side:Literal["left","right"] = "left" if direction != "left" else "right"
+
         self.stm.send_stm_command(
             *[
-                StmTurn(angle=toggle_flip * -80, speed=self.config.turn_speed),
+                StmTurn(angle=toggle_flip * -90, speed=self.config.turn_speed),
                 StmWiggle(),
-                StmTurn(angle=toggle_flip * 80, speed=self.config.turn_speed),
+                StmSideHug(hug_side, threshold=50, speed=self.config.turn_speed),
+                StmTurn(angle=toggle_flip * 180, speed=self.config.turn_speed),
                 StmWiggle(),
-                StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed),
-                StmWiggle(),
-                StmWiggle(),
-                StmWiggle(),
-                StmStraight(distance=50, speed=self.config.turn_speed),
-                StmWiggle(),
-                StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed),
-                StmWiggle(),
+                StmSideHug(hug_side, threshold=50, speed=self.config.turn_speed)
+                # StmTurn(angle=toggle_flip * -80, speed=self.config.turn_speed),
+                # StmWiggle(),
+                # StmTurn(angle=toggle_flip * 80, speed=self.config.turn_speed),
+                # StmWiggle(),
+                # StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed),
+                # StmWiggle(),
+                # StmWiggle(),
+                # StmWiggle(),
+                # StmStraight(distance=50, speed=self.config.turn_speed),
+                # StmWiggle(),
+                # StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed),
+                # StmWiggle(),
             ]
         )
 

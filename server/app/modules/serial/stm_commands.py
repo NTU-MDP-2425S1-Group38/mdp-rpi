@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Literal
 
 
 class StmCommand(ABC):
@@ -108,9 +109,37 @@ class StmToggleMeasure(StmCommand):
         return "D\n"
 
 
+class StmSideHug(StmCommand):
 
+    def __init__(
+            self,
+            side: Literal["left", "right"],
+            threshold: int,
+            speed: int,
+            forward: bool = True
+    ):
+        """
+        Command to use the IR sensor to "hug" the obstacles.
+        :param side: Literal["left","right"] to set which side sensor to use
+        :param threshold: Distance to be detected, robot will stop after distance detected is >= threshold.
+        :param speed: Speed for the robot to move
+        :param forward: Self explanatory
+        """
 
+        self.side = side
+        self.threshold = threshold
+        self.speed = speed
+        self.forward = forward
 
+    def to_serial(self) -> str:
+
+        flag = "L" if self.side == "left" else "R"
+        if not self.forward:
+            flag = flag.lower()
+
+        # format
+        # flag, speed, angle, threshold distance
+        return f"{flag},{self.speed},0,{self.threshold}\n"
 
 
 
