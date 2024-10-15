@@ -69,7 +69,9 @@ class STM(metaclass=Singleton):
         """
         while True:
             if self.serial_link.in_waiting > 0:
-                return str(self.serial_link.read_all(), "utf-8")
+                payload = str(self.serial_link.read_all(), "utf-8")
+                self.logger.info(f"Received: {payload}")
+                return payload
 
     def run_task_1(self):
         """Run the STM32 module."""
