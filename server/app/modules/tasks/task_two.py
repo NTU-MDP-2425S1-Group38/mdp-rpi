@@ -188,7 +188,8 @@ class TaskTwoRunner(metaclass=Singleton):
     """
 
     def _test(self) -> None:
-        self.stm.send_stm_command(StmMoveToDistance(10))
+        for _ in range(5):
+            self.stm.send_stm_command_and_wait(StmSideHug(threshold=60, speed=40))
 
     def _step_one(self) -> None:
         """
@@ -338,5 +339,5 @@ class TaskTwoRunner(metaclass=Singleton):
 
     def run(self, callback:Callable[[], None] = lambda: None) -> None:
         self.end_callback = callback
-        self._step_one()
-
+        # self._step_one()
+        self._test()
