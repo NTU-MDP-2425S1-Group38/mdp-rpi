@@ -81,7 +81,7 @@ class TaskTwoRunner(metaclass=Singleton):
         Move forward until the "front_distance_threshold"
         :return:
         """
-        self.stm.send_stm_command(StmMoveToDistance(distance=distance))
+        self.stm.send_stm_command_and_wait(StmMoveToDistance(distance=distance))
 
     def _handle_distance_result(self, payload: str) -> int:
         """
@@ -89,7 +89,7 @@ class TaskTwoRunner(metaclass=Singleton):
         :param payload: should be in the format of `fD{distance}`; e.g. `fD150.24`
         :return:
         """
-
+        self.logger.info(f"Received: {payload}")
         try:
             dist_str = payload.replace("fD", "").strip()
             return int(float(dist_str.split("\\")[0]))
@@ -105,12 +105,12 @@ class TaskTwoRunner(metaclass=Singleton):
         Assumes that the robot is already at front_distance_threshold
         :return:
         """
-        self.stm.send_stm_command(StmMoveToDistance(distance, forward=False))
+        self.stm.send_stm_command_and_wait(StmMoveToDistance(distance, forward=False))
 
     def _bypass_obstacle(self, direction: Literal["left", "right"]) -> None:
         toggle_flip = 1 if direction == "right" else -1
 
-        self.stm.send_stm_command(
+        self.stm.send_stm_command_and_wait(
             *[
                 StmTurn(angle=toggle_flip * 45, speed=self.config.turn_speed),
                 StmWiggle(),
@@ -124,9 +124,6 @@ class TaskTwoRunner(metaclass=Singleton):
                 StmWiggle(),
             ]
         )
-        time.sleep(
-            5
-        )  # time taken for the robot to maneuver, before proceeding to next step.
         self.config.BYPASS_DISTANCE += 90
 
     def _go_around_obstacle(self, direction: Literal["left", "right"]):
@@ -195,12 +192,10 @@ class TaskTwoRunner(metaclass=Singleton):
         self.logger.info("Executing STEP ONE")
 
         # Start tracking of distance
-        self.stm.send_stm_command(StmToggleMeasure())
-        self.stm.wait_receive()
+        self.stm.send_stm_command_and_wait(StmToggleMeasure())
 
         # Move to obstacle
         self._move_forward_to_distance(50)
-        self.stm.wait_receive()
 
         # Get distance traveled
         self.stm.send_stm_command(StmToggleMeasure())
@@ -230,7 +225,6 @@ class TaskTwoRunner(metaclass=Singleton):
             )
             self._bypass_obstacle(direction)
             self.distance_to_backtrack += (self.config.BYPASS_DISTANCE // 2)
-            self.stm.wait_receive()
             self._step_three()
 
     def _step_three(self) -> None:
@@ -257,7 +251,6 @@ class TaskTwoRunner(metaclass=Singleton):
 
         # Move back to safe turning distance
         self._move_backwards_to_distance(30)
-        self.stm.wait_receive()
 
         # Capture image and send callback
         self.cm.slave_request_cv(Camera().capture(), self._step_four, ignore_bullseye=True)
@@ -334,3 +327,4 @@ class TaskTwoRunner(metaclass=Singleton):
     def run(self, callback:Callable[[], None] = lambda: None) -> None:
         self.end_callback = callback
         self._step_one()
+

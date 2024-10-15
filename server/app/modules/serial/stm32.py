@@ -53,6 +53,17 @@ class STM(metaclass=Singleton):
         for c in stm_commands:
             self.send(c.to_serial())
 
+    def send_stm_command_and_wait(self, *stm_commands:StmCommand) -> None:
+        """
+        A more "sync" version of send_stm_command
+        :param stm_commands:
+        :return:
+        """
+
+        for c in stm_commands:
+            self.send(c.to_serial())
+            self.wait_receive()
+
     def send_cmd(self, flag, speed, angle, val):
         """Send command and wait for acknowledge."""
         cmd = flag
