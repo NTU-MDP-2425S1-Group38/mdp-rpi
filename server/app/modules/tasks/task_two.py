@@ -196,6 +196,12 @@ class TaskTwoRunner(metaclass=Singleton):
 
         # Move to obstacle
         self._move_forward_to_distance(50)
+        self.stm.wait_receive()
+
+        # Get distance traveled
+        self.stm.send_stm_command(StmToggleMeasure())
+        distance = self._handle_distance_result(self.stm.wait_receive())
+        self.config.BYPASS_DISTANCE += distance
 
         # Send CV request and pass step two as callback
         self.cm.slave_request_cv(Camera().capture(), self._step_two, ignore_bullseye=True)
