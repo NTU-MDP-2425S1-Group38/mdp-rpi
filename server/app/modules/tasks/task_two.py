@@ -1,4 +1,5 @@
 import logging
+import math
 import time
 from typing import Literal, Callable
 
@@ -31,11 +32,13 @@ class TaskTwoRunner(metaclass=Singleton):
 
         SERVO_TURN_ANGLE = 25
         BYPASS_DISTANCE: int
+        OBSTACLE_WIDTH: int
 
         STEP_THREE_CLOSEUP_DISTANCE: int = 30  # Distance for the robot to MOVE_FORWARD to the second obstacle
         FALLBACK_STEP_THREE_DISTANCE: int = 80
 
         def __init__(self):
+            self.OBSTACLE_WIDTH = 0
             self.BYPASS_DISTANCE = 70
 
     def __init__(self):
@@ -80,6 +83,19 @@ class TaskTwoRunner(metaclass=Singleton):
         """
         self.stm.send_stm_command(StmMoveToDistance(distance=distance))
 
+    @staticmethod
+    def _handle_distance_result(payload: str) -> int:
+        """
+        Function to parse the returned string, calculate the proper offset
+        :param payload: should be in the format of `fD{distance}`; e.g. `fD150.24`
+        :return:
+        """
+
+        dist_str = payload.replace("fD", "").strip()
+        return int(float(dist_str))
+
+
+
     def _move_backwards_to_distance(self, distance: int) -> None:
         """
         Move backwards until a safe distance to maneuver.
@@ -108,6 +124,7 @@ class TaskTwoRunner(metaclass=Singleton):
         time.sleep(
             5
         )  # time taken for the robot to maneuver, before proceeding to next step.
+        self.config.BYPASS_DISTANCE += 90
 
     def _go_around_obstacle(self, direction: Literal["left", "right"]):
         """
@@ -119,28 +136,37 @@ class TaskTwoRunner(metaclass=Singleton):
 
         hug_side:Literal["left","right"] = "left" if direction != "left" else "right"
 
-        self.stm.send_stm_command(
-            *[
+        commands = [
                 StmTurn(angle=toggle_flip * -90, speed=self.config.turn_speed),
                 StmWiggle(),
                 StmSideHug(hug_side, threshold=50, speed=self.config.turn_speed),
                 StmTurn(angle=toggle_flip * 180, speed=self.config.turn_speed),
                 StmWiggle(),
-                StmSideHug(hug_side, threshold=50, speed=self.config.turn_speed)
-                # StmTurn(angle=toggle_flip * -80, speed=self.config.turn_speed),
-                # StmWiggle(),
-                # StmTurn(angle=toggle_flip * 80, speed=self.config.turn_speed),
-                # StmWiggle(),
-                # StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed),
-                # StmWiggle(),
-                # StmWiggle(),
-                # StmWiggle(),
-                # StmStraight(distance=50, speed=self.config.turn_speed),
-                # StmWiggle(),
-                # StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed),
-                # StmWiggle(),
             ]
-        )
+
+        for c in commands:
+            self.stm.send_stm_command(c)
+            self.stm.wait_receive()
+
+        # Start measuring distance of the obstacle
+        self.stm.send_stm_command(StmToggleMeasure())
+        self.stm.wait_receive()
+
+        # Move to end of obstacle
+        self.stm.send_stm_command(StmSideHug(hug_side, threshold=50, speed=self.config.turn_speed))
+
+        # Get distance covered
+        width = self._handle_distance_result(self.stm.wait_receive())
+        self.config.OBSTACLE_WIDTH = width
+
+        # Right turn
+        self.stm.send_stm_command(StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed))
+
+
+
+
+
+
 
     """
     STEP Methods
@@ -171,7 +197,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self._move_forward_to_distance(50)
 
         # Send CV request and pass step two as callback
-        self.cm.slave_request_cv(Camera().capture(), self._step_two)
+        self.cm.slave_request_cv(Camera().capture(), self._step_two, ignore_bullseye=True)
 
     def _step_two(self, response: CvResponse) -> None:
         """
@@ -205,27 +231,6 @@ class TaskTwoRunner(metaclass=Singleton):
         """
         self.logger.info("Executing STEP THREE")
 
-        def handle_distance_result(payload: str) -> None:
-            """
-            Function to parse the returned string, calculate the proper offset
-            :param payload: should be in the format of `fD{distance}`; e.g. `fD150.24`
-            :return:
-            """
-
-            try:
-                dist_str = payload.replace("fD", "").strip()
-                self.distance_to_backtrack += (
-                    int(float(dist_str)) + self.config.STEP_THREE_CLOSEUP_DISTANCE
-                )
-            except Exception as e:
-                self.logger.error(e)
-                self.logger.warning(
-                    f"Using fallback step three distance! {self.config.FALLBACK_STEP_THREE_DISTANCE}"
-                )
-                self.distance_to_backtrack += self.config.FALLBACK_STEP_THREE_DISTANCE
-
-            return
-
         # Move to threshold distance
         # self.stm.send_stm_command(StmStraight(5, 30, False))
         self.stm.send_stm_command(StmToggleMeasure())
@@ -235,14 +240,16 @@ class TaskTwoRunner(metaclass=Singleton):
 
         # Record distance between both obstacles
         self.stm.send_stm_command(StmToggleMeasure())
-        handle_distance_result(self.stm.wait_receive())
+        distance_moved = self._handle_distance_result(self.stm.wait_receive())
+
+        self.config.BYPASS_DISTANCE += distance_moved
 
         # Move back to safe turning distance
         self._move_backwards_to_distance(30)
         self.stm.wait_receive()
 
         # Capture image and send callback
-        self.cm.slave_request_cv(Camera().capture(), self._step_four)
+        self.cm.slave_request_cv(Camera().capture(), self._step_four, ignore_bullseye=True)
 
     def _step_four(self, response: CvResponse) -> None:
         """
@@ -280,6 +287,8 @@ class TaskTwoRunner(metaclass=Singleton):
         """
         toggle_flip = 1 if arrow_direction == "left" else -1
 
+        offset_distance = int(math.sqrt(2*((self.config.OBSTACLE_WIDTH/2)**2)))
+
         self.logger.info(f"Backtrack distance: {self.distance_to_backtrack}")
         self.stm.send_stm_command(
             *[
@@ -289,6 +298,9 @@ class TaskTwoRunner(metaclass=Singleton):
                 ),
                 # Align with car park
                 StmTurn(angle=toggle_flip * 80, speed=self.config.turn_speed),
+                StmWiggle(),
+                StmStraight(distance=offset_distance, speed=self.config.turn_speed),
+                StmWiggle(),
                 StmTurn(angle=toggle_flip * -80, speed=self.config.turn_speed),
                 # Close into car park
                 StmMoveToDistance(distance=20),
