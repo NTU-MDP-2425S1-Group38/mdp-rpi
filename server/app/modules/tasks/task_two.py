@@ -83,16 +83,19 @@ class TaskTwoRunner(metaclass=Singleton):
         """
         self.stm.send_stm_command(StmMoveToDistance(distance=distance))
 
-    @staticmethod
-    def _handle_distance_result(payload: str) -> int:
+    def _handle_distance_result(self, payload: str) -> int:
         """
         Function to parse the returned string, calculate the proper offset
         :param payload: should be in the format of `fD{distance}`; e.g. `fD150.24`
         :return:
         """
 
-        dist_str = payload.replace("fD", "").strip()
-        return int(float(dist_str.split("\\")[0]))
+        try:
+            dist_str = payload.replace("fD", "").strip()
+            return int(float(dist_str.split("\\")[0]))
+        except Exception:
+            self.logger.warning("Unable to parse distance! Returning 0!")
+            return 0
 
 
 
