@@ -204,16 +204,9 @@ class TaskTwoRunner(metaclass=Singleton):
         """
         self.logger.info("Executing STEP ONE")
 
-        # Start tracking of distance
-        self.stm.send_stm_command_and_wait(StmToggleMeasure())
 
         # Move to obstacle
         self._move_forward_to_distance(50)
-
-        # Get distance traveled
-        self.stm.send_stm_command(StmToggleMeasure())
-        distance = self._handle_distance_result(self.stm.wait_receive())
-        self.config.BYPASS_DISTANCE += distance
 
         # Send CV request and pass step two as callback
         self.cm.slave_request_cv(Camera().capture(), self._step_two, ignore_bullseye=True)
@@ -237,7 +230,7 @@ class TaskTwoRunner(metaclass=Singleton):
                 "left" if response.label == ObstacleLabel.Shape_Left else "right"
             )
             self._bypass_obstacle(direction)
-            self.distance_to_backtrack += (self.config.BYPASS_DISTANCE // 2)
+            self.distance_to_backtrack += self.config.BYPASS_DISTANCE
             self._step_three()
 
     def _step_three(self) -> None:
@@ -257,13 +250,14 @@ class TaskTwoRunner(metaclass=Singleton):
 
         self._move_forward_to_distance(self.config.STEP_THREE_CLOSEUP_DISTANCE)
 
-        self._move_backwards_to_distance(self.config.STEP_THREE_CLOSEUP_DISTANCE)
-
         # Record distance between both obstacles
         self.stm.send_stm_command(StmToggleMeasure())
         distance_moved = self._handle_distance_result(self.stm.wait_receive())
-
         self.config.BYPASS_DISTANCE += distance_moved
+
+        self._move_backwards_to_distance(self.config.STEP_THREE_CLOSEUP_DISTANCE)
+
+
 
         # Move back to safe turning distance
         self._move_backwards_to_distance(30)
@@ -312,6 +306,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.logger.info(f"Backtrack distance: {self.distance_to_backtrack}")
         self.stm.send_stm_command(
             *[
+                StmWiggle(),
                 # Move backtrack distance
                 StmStraight(
                     distance=self.distance_to_backtrack, speed=self.config.forward_speed
@@ -319,7 +314,7 @@ class TaskTwoRunner(metaclass=Singleton):
                 # Align with car park
                 StmTurn(angle=toggle_flip * 80, speed=self.config.turn_speed),
                 StmWiggle(),
-                StmStraight(distance=offset_distance, speed=self.config.turn_speed),
+                StmStraight(distance=offset_distance-30, speed=self.config.turn_speed),
                 StmWiggle(),
                 StmTurn(angle=toggle_flip * -80, speed=self.config.turn_speed),
                 # Close into car park
