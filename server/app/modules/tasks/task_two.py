@@ -92,7 +92,7 @@ class TaskTwoRunner(metaclass=Singleton):
         """
 
         dist_str = payload.replace("fD", "").strip()
-        return int(float(dist_str))
+        return int(float(dist_str.split("\\")[0]))
 
 
 
@@ -193,6 +193,7 @@ class TaskTwoRunner(metaclass=Singleton):
 
         # Start tracking of distance
         self.stm.send_stm_command(StmToggleMeasure())
+        self.stm.wait_receive()
 
         # Move to obstacle
         self._move_forward_to_distance(50)
