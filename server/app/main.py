@@ -35,7 +35,7 @@ def run_bluetooth_server() -> None:
     load_dotenv()
     init_logger()
     android = Android()
-    android.run_task_2()
+    # android.run_task_2()
 
 
 def run_stm() -> None:
