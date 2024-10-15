@@ -19,7 +19,6 @@ import uvicorn
 
 def run_web_server() -> None:
     load_dotenv()
-    init_logger()
     logging.getLogger().info("Starting server as main!")
     web_server = WebServer().get_web_server()
     uvicorn.run(
@@ -33,14 +32,12 @@ def run_web_server() -> None:
 
 def run_bluetooth_server() -> None:
     load_dotenv()
-    init_logger()
     android = Android()
     # android.run_task_2()
 
 
 def run_stm() -> None:
     load_dotenv()
-    init_logger()
     stm = STM()
     stm.connect()
 
