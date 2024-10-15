@@ -123,11 +123,13 @@ class TaskTwoRunner(metaclass=Singleton):
                 StmWiggle(),
             ]
 
-        self.stm.send_stm_command_and_wait(
+        self.stm.send_stm_command(
             *commands
         )
 
-        # time.sleep(7)
+        for _ in commands:
+            self.stm.wait_receive(1)
+
         self.config.BYPASS_DISTANCE += 90
 
     def _go_around_obstacle(self, direction: Literal["left", "right"]):

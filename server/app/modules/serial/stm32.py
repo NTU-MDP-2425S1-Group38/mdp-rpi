@@ -1,4 +1,6 @@
 import logging
+import math
+from datetime import datetime, timedelta
 
 from utils.metaclass.singleton import Singleton
 from .configuration import BAUD_RATE, SERIAL_PORT
@@ -72,13 +74,24 @@ class STM(metaclass=Singleton):
         cmd += "\n"
         self.send(cmd)
 
-    def wait_receive(self, ticks=5000) -> Optional[str]:
+    def wait_receive(self, timeout:Optional[int] = None) -> Optional[str]:
         """Receive a message from STM32, utf-8 decoded
+
+        Args:
+            timeout: Optional[int]>0: Seconds before timeout
 
         Returns:
             Optional[str]: message received
         """
-        while True:
+
+        if timeout:
+            assert timeout>0, "Timeout > 0!"
+
+        cut_off = datetime.now() + timedelta(seconds=0)
+
+
+
+        while True and ((timeout and datetime.now()<cut_off) or not timeout):
             if self.serial_link.in_waiting > 0:
                 payload = str(self.serial_link.read_all(), "utf-8")
                 self.logger.info(f"Received: {payload.strip()}")
