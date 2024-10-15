@@ -239,11 +239,14 @@ class TaskTwoRunner(metaclass=Singleton):
         self.logger.info("Executing STEP THREE")
 
         # Move to threshold distance
-        # self.stm.send_stm_command(StmStraight(5, 30, False))
+        self.stm.send_stm_command_and_wait(StmStraight(5, 30, False))
+
         self.stm.send_stm_command(StmToggleMeasure())
         self.stm.wait_receive()
+
         self._move_forward_to_distance(self.config.STEP_THREE_CLOSEUP_DISTANCE)
-        self.stm.wait_receive()
+
+        self._move_backwards_to_distance(self.config.STEP_THREE_CLOSEUP_DISTANCE)
 
         # Record distance between both obstacles
         self.stm.send_stm_command(StmToggleMeasure())
