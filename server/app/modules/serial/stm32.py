@@ -85,9 +85,11 @@ class STM(metaclass=Singleton):
         """
 
         if timeout:
-            assert timeout>0, "Timeout > 0!"
+            assert timeout>=0, "Timeout >= 0!"
+        else:
+            timeout = 0
 
-        cut_off = datetime.now() + timedelta(seconds=0)
+        cut_off = datetime.now() + timedelta(seconds=timeout)
 
 
 
