@@ -139,7 +139,7 @@ class StmSideHug(StmCommand):
 
         # format
         # flag, speed, angle, threshold distance
-        return f"{flag},{self.speed},0,{self.threshold}\n"
+        return f"{flag}{self.speed}|0|{self.threshold}\n"
 
 
 
