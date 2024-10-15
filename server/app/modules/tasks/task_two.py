@@ -30,15 +30,13 @@ class TaskTwoRunner(metaclass=Singleton):
         turn_speed: int = 40
 
         SERVO_TURN_ANGLE = 25
-        BYPASS_DISTANCE: int = (
-            70  # Distance used to bypass an obstacle (in the entire turning process)
-        )
+        BYPASS_DISTANCE: int
 
-        STEP_THREE_CLOSEUP_DISTANCE: int  # Distance for the robot to MOVE_FORWARD to the second obstacle
+        STEP_THREE_CLOSEUP_DISTANCE: int = 30  # Distance for the robot to MOVE_FORWARD to the second obstacle
         FALLBACK_STEP_THREE_DISTANCE: int = 80
 
         def __init__(self):
-            self.BYPASS_DISTANCE = 30
+            self.BYPASS_DISTANCE = 70
 
     def __init__(self):
         self.logger = logging.getLogger("TaskTwoRunner")
