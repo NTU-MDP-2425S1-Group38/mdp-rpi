@@ -151,11 +151,11 @@ class TaskTwoRunner(metaclass=Singleton):
                 StmSideHug(hug_side, threshold=60, speed=self.config.turn_speed),
                 StmTurn(angle=toggle_flip * 180, speed=self.config.turn_speed),
                 StmWiggle(),
+                StmWiggle(),
+                StmWiggle(),
             ]
 
-        for c in commands:
-            self.stm.send_stm_command(c)
-            self.stm.wait_receive()
+        self.stm.send_stm_command_and_wait(*commands)
 
         # Start measuring distance of the obstacle
         self.stm.send_stm_command(StmToggleMeasure())
