@@ -93,7 +93,7 @@ class TaskTwoRunner(metaclass=Singleton):
         try:
             dist_str = payload.replace("fD", "").strip()
             self.logger.debug(f"Attempting to parse this as distance: [{dist_str}]")
-            return int(float(dist_str))
+            return int(dist_str.split(".")[0])
         except Exception:
             self.logger.warning("Unable to parse distance! Returning 0!")
             return 0
@@ -113,15 +113,24 @@ class TaskTwoRunner(metaclass=Singleton):
 
         commands = [
                 StmTurn(angle=toggle_flip * 45, speed=self.config.turn_speed),
+                StmWiggle(),
                 StmTurn(angle=toggle_flip * -45, speed=self.config.turn_speed),
+                StmWiggle(),
                 StmStraight(distance=20, speed=self.config.turn_speed),
+                StmWiggle(),
                 StmTurn(angle=toggle_flip * -45, speed=self.config.turn_speed),
+                StmWiggle(),
                 StmTurn(angle=toggle_flip * 45, speed=self.config.turn_speed),
+                StmWiggle(),
             ]
 
-        self.stm.send_stm_command_and_wait(
+        self.stm.send_stm_command(
             *commands
         )
+
+        self.logger.info("Catching leftover commands")
+        for _ in commands:
+            self.stm.wait_receive(2)
 
         self.config.BYPASS_DISTANCE += 90
 
