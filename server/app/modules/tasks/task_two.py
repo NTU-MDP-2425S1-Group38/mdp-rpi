@@ -158,6 +158,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.stm.send_stm_command(StmSideHug(hug_side, threshold=50, speed=self.config.turn_speed))
 
         # Get distance covered
+        self.stm.send_stm_command(StmToggleMeasure())
         width = self._handle_distance_result(self.stm.wait_receive())
         self.config.OBSTACLE_WIDTH = width
 
