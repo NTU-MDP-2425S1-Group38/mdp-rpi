@@ -132,6 +132,7 @@ class TaskTwoRunner(metaclass=Singleton):
         :param direction:
         :return:
         """
+        self.logger.info("Entering GO AROUND OBSTACLE")
         toggle_flip = 1 if direction == "left" else -1
 
         hug_side:Literal["left","right"] = "left" if direction != "left" else "right"
