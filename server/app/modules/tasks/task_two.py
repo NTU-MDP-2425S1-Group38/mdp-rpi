@@ -92,6 +92,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.logger.info(f"Received: {payload}")
         try:
             dist_str = payload.replace("fD", "").strip()
+            self.logger.debug(f"Attempting to parse this as distance: [{dist_str}]")
             return int(float(dist_str))
         except Exception:
             self.logger.warning("Unable to parse distance! Returning 0!")
@@ -112,23 +113,15 @@ class TaskTwoRunner(metaclass=Singleton):
 
         commands = [
                 StmTurn(angle=toggle_flip * 45, speed=self.config.turn_speed),
-                StmWiggle(),
                 StmTurn(angle=toggle_flip * -45, speed=self.config.turn_speed),
-                StmWiggle(),
                 StmStraight(distance=20, speed=self.config.turn_speed),
-                StmWiggle(),
                 StmTurn(angle=toggle_flip * -45, speed=self.config.turn_speed),
-                StmWiggle(),
                 StmTurn(angle=toggle_flip * 45, speed=self.config.turn_speed),
-                StmWiggle(),
             ]
 
-        self.stm.send_stm_command(
+        self.stm.send_stm_command_and_wait(
             *commands
         )
-
-        for _ in commands:
-            self.stm.wait_receive(1)
 
         self.config.BYPASS_DISTANCE += 90
 
@@ -146,7 +139,7 @@ class TaskTwoRunner(metaclass=Singleton):
         commands = [
                 StmTurn(angle=toggle_flip * -90, speed=self.config.turn_speed),
                 StmWiggle(),
-                StmSideHug(hug_side, threshold=50, speed=self.config.turn_speed),
+                StmSideHug(hug_side, threshold=100, speed=self.config.turn_speed),
                 StmTurn(angle=toggle_flip * 180, speed=self.config.turn_speed),
                 StmWiggle(),
             ]
