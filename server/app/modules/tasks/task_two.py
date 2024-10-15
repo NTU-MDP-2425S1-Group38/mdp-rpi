@@ -339,5 +339,5 @@ class TaskTwoRunner(metaclass=Singleton):
 
     def run(self, callback:Callable[[], None] = lambda: None) -> None:
         self.end_callback = callback
-        # self._step_one()
-        self._test()
+        self._step_one()
+        # self._test()
