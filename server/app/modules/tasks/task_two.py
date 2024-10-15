@@ -110,8 +110,7 @@ class TaskTwoRunner(metaclass=Singleton):
     def _bypass_obstacle(self, direction: Literal["left", "right"]) -> None:
         toggle_flip = 1 if direction == "right" else -1
 
-        self.stm.send_stm_command(
-            *[
+        commands = [
                 StmTurn(angle=toggle_flip * 45, speed=self.config.turn_speed),
                 StmWiggle(),
                 StmTurn(angle=toggle_flip * -45, speed=self.config.turn_speed),
@@ -123,8 +122,12 @@ class TaskTwoRunner(metaclass=Singleton):
                 StmTurn(angle=toggle_flip * 45, speed=self.config.turn_speed),
                 StmWiggle(),
             ]
+
+        self.stm.send_stm_command_and_wait(
+            *commands
         )
-        time.sleep(7)
+
+        # time.sleep(7)
         self.config.BYPASS_DISTANCE += 90
 
     def _go_around_obstacle(self, direction: Literal["left", "right"]):
