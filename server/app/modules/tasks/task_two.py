@@ -329,12 +329,12 @@ class TaskTwoRunner(metaclass=Singleton):
         toggle_flip = 1 if arrow_direction == "left" else -1
 
         offset_distance = max(
-            int((2 ** 0.5) * ((self.config.OBSTACLE_WIDTH - 25)/ 2)),
+            int((2 ** 0.5) * ((self.config.OBSTACLE_WIDTH - 12)/ 2)),
             0
         )
 
         # distance before making first 45deg turn
-        backtrack_distance = self.distance_to_backtrack - offset_distance
+        backtrack_distance = self.distance_to_backtrack - 15 - offset_distance
 
         self._log_tracked_distances("Performing backtrack")
 
