@@ -407,6 +407,7 @@ class Task1RPI:
                         or turning_degree == f"{self.drive_angle}"
                         or turning_degree == "0"
                     ):
+                        print(self.robot_x, self.robot_y, self.robot_d)
                         msg = f"ROBOT|{self.robot_y},{self.robot_x},{self.robot_d}"
                     # if turning_degree == f"-{self.drive_angle}":
                     #     # Turn left
@@ -437,6 +438,7 @@ class Task1RPI:
                         msg = "No instruction"
 
                     if msg != "No instruction":
+                        print(msg)
                         self.logger.info(f"Msg: {msg}")
                         self.android_queue.put(msg)
                         self.logger.info(f"SENT TO ANDROID SUCCESSFULLY: {msg}")
@@ -515,6 +517,8 @@ class Task1RPI:
                 self.robot_x = command["end_position"]["x"]
                 self.robot_y = command["end_position"]["y"]
                 self.robot_d = direction_obstacle[command["end_position"]["d"]]
+
+                print(self.robot_x, self.robot_y, self.robot_d)
 
                 if isinstance(command["value"], dict) and command["value"]["move"] in [
                     "FORWARD",
