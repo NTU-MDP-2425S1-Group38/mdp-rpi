@@ -229,7 +229,7 @@ class TaskTwoRunner(metaclass=Singleton):
                 "left" if response.label == ObstacleLabel.Shape_Left else "right"
             )
             self._bypass_obstacle(direction)
-            self.distance_to_backtrack += (self.config.BYPASS_DISTANCE // 2)
+            self.distance_to_backtrack += self.config.BYPASS_DISTANCE
             self._step_three()
 
     def _step_three(self) -> None:
