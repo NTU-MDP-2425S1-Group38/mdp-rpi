@@ -297,7 +297,7 @@ class Task1RPI:
                     self.robot = {"x": x, "y": y, "dir": dir}
                     self.logger.info("Robot set successfully: ", self.robot)
 
-                elif "BEGIN" in message_rcv:
+                elif "Calculate" in message_rcv:
                     if not self.check_api():
                         self.logger.error("API is down! Start command aborted.")
                         # self.android_queue.put(
@@ -315,6 +315,29 @@ class Task1RPI:
 
                     while self.command_queue.empty():
                         pass
+
+                    # Commencing path following
+                    if not self.command_queue.empty():
+                        self.logger.debug("Calculated")
+
+                elif "BEGIN" in message_rcv:
+                    # if not self.check_api():
+                    #     self.logger.error("API is down! Start command aborted.")
+                    #     # self.android_queue.put(
+                    #     #     "error, API is down, start command aborted."
+                    #     # )
+
+                    # self.rpi_action_queue.put(
+                    #     PiAction(
+                    #         cat="obstacles", value=list(self.obstacle_dict.values())
+                    #     )
+                    # )
+                    # self.logger.debug(
+                    #     f"Set obstacles PiAction added to queue: {self.obstacle_dict}"
+                    # )
+
+                    # while self.command_queue.empty():
+                    #     pass
 
                     # Commencing path following
                     if not self.command_queue.empty():
