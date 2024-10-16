@@ -1,6 +1,7 @@
 import logging
 import math
 import time
+from textwrap import dedent
 from typing import Literal, Callable
 
 from scipy.special.cython_special import spence
@@ -69,12 +70,19 @@ class TaskTwoRunner(metaclass=Singleton):
     HELPER METHODS
     """
 
+    def _log_tracked_distances(self, label:str = "UNLABELED") -> None:
+        self.logger.debug(dedent(f"""
+            [[[\t{label.upper()}\t]]]
+            BYPASS DISTANCE:\t\t{self.distance_to_backtrack}
+            OFFSET DISTANCE:\t\t{self.config.OBSTACLE_WIDTH}
+        """))
+
     def _wiggle_servo(self) -> None:
         """
         Wiggle servo to center
         :return: None
         """
-        self.stm.send_stm_command(StmWiggle())
+        self.stm.send_stm_command_and_wait(StmWiggle())
 
     def _move_forward_to_distance(self, distance: int) -> None:
         """
@@ -133,6 +141,7 @@ class TaskTwoRunner(metaclass=Singleton):
             self.stm.wait_receive(2)
 
         self.distance_to_backtrack += self.config.BYPASS_DISTANCE
+        self._log_tracked_distances("bypass obstacle")
 
     def _go_around_obstacle(self, direction: Literal["left", "right"]):
         """
@@ -169,6 +178,7 @@ class TaskTwoRunner(metaclass=Singleton):
         self.stm.send_stm_command(StmToggleMeasure())
         width = self._handle_distance_result(self.stm.wait_receive())
         self.config.OBSTACLE_WIDTH = width
+        self._log_tracked_distances("go around obstacle")
 
         # Right turn
         self.stm.send_stm_command_and_wait(*[
@@ -235,6 +245,7 @@ class TaskTwoRunner(metaclass=Singleton):
             )
             self._bypass_obstacle(direction)
             self.distance_to_backtrack += (self.config.BYPASS_DISTANCE//2) + 10
+            self._log_tracked_distances("End of step two")
             self._step_three()
 
     def _step_three(self) -> None:
@@ -257,14 +268,15 @@ class TaskTwoRunner(metaclass=Singleton):
         # Record distance between both obstacles
         self.stm.send_stm_command(StmToggleMeasure())
         distance_moved = self._handle_distance_result(self.stm.wait_receive())
-        self.config.BYPASS_DISTANCE += distance_moved
+        self.distance_to_backtrack += distance_moved
+        self._log_tracked_distances("After tracking step three")
+
 
         self._move_backwards_to_distance(self.config.STEP_THREE_CLOSEUP_DISTANCE)
 
         # Account for additional distance to account for
         self.distance_to_backtrack += self.config.STEP_THREE_CLOSEUP_DISTANCE
-
-
+        self._log_tracked_distances("step three close up distance")
 
         # Move back to safe turning distance
         self._move_backwards_to_distance(30)
@@ -310,6 +322,8 @@ class TaskTwoRunner(metaclass=Singleton):
 
         offset_distance = max(int((2 ** 0.5) * (self.config.OBSTACLE_WIDTH / 2)) - 15, 0)
         backtrack_distance = self.distance_to_backtrack - 15  # distance before making first 45deg turn
+
+        self._log_tracked_distances("Performing backtrack")
 
         self.logger.info(f"OFFSET DISTANCE: {offset_distance}")
         self.logger.info(f"BACKTRACK: {backtrack_distance}")
