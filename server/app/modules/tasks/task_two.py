@@ -159,6 +159,9 @@ class TaskTwoRunner(metaclass=Singleton):
         commands = [
                 StmTurn(angle=toggle_flip * -90, speed=self.config.turn_speed),
                 StmWiggle(),
+                StmWiggle(),
+                StmWiggle(),
+                StmMoveUntilSideObstacle(hug_side, threshold=60, speed=self.config.turn_speed, forward=False)
                 StmSideHug(hug_side, threshold=60, speed=self.config.turn_speed),
                 StmTurn(angle=toggle_flip * 180, speed=self.config.turn_speed),
                 StmWiggle(),
