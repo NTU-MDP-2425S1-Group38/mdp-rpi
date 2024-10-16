@@ -116,7 +116,7 @@ class StmSideHug(StmCommand):
             side: Literal["left", "right"],
             threshold: int,
             speed: int,
-            forward: bool = True
+            forward: bool = True,
     ):
         """
         Command to use the IR sensor to "hug" the obstacles.
@@ -126,6 +126,8 @@ class StmSideHug(StmCommand):
         :param forward: Self explanatory
         """
 
+        assert threshold > 0, "Threshold value must be positive!"
+
         self.side = side
         self.threshold = threshold
         self.speed = speed
@@ -133,6 +135,40 @@ class StmSideHug(StmCommand):
 
     def to_serial(self) -> str:
 
+        flag = "L" if self.side == "left" else "R"
+        if not self.forward:
+            flag = flag.lower()
+
+        # format
+        # flag, speed, angle, threshold distance
+        return f"{flag}{self.speed}|0|{self.threshold}\n"
+
+
+class StmMoveUntilSideObstacle(StmCommand):
+
+    def __init__(
+            self,
+            side: Literal["left", "right"],
+            threshold: int,
+            speed: int,
+            forward: bool = True,
+    ):
+        """
+        Command to move forward until an obstacle is within side threshold value
+        :param side: Literal["left","right"] to set which side sensor to use
+        :param threshold: Distance to be detected, robot will stop after distance detected is < threshold.
+        :param speed: Speed for the robot to move
+        :param forward: Self explanatory
+        """
+
+        assert threshold > 0, "Threshold value must be positive!"
+
+        self.side = side
+        self.threshold = -threshold
+        self.speed = speed
+        self.forward = forward
+
+    def to_serial(self) -> str:
         flag = "L" if self.side == "left" else "R"
         if not self.forward:
             flag = flag.lower()

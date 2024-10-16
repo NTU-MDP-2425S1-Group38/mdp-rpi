@@ -15,7 +15,7 @@ from modules.serial.stm_commands import (
     StmWiggle,
     StmToggleMeasure,
     StmTurn,
-    StmStraight, StmSideHug,
+    StmStraight, StmSideHug, StmMoveUntilSideObstacle,
 )
 from modules.web_server.connection_manager import ConnectionManager
 from utils.metaclass.singleton import Singleton
@@ -151,8 +151,7 @@ class TaskTwoRunner(metaclass=Singleton):
                 StmSideHug(hug_side, threshold=60, speed=self.config.turn_speed),
                 StmTurn(angle=toggle_flip * 180, speed=self.config.turn_speed),
                 StmWiggle(),
-                StmWiggle(),
-                StmWiggle(),
+                StmMoveUntilSideObstacle(side=hug_side, threshold=60, speed=self.config.turn_speed)
             ]
 
         self.stm.send_stm_command_and_wait(*commands)
