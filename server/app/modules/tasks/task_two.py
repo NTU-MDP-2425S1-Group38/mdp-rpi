@@ -172,6 +172,7 @@ class TaskTwoRunner(metaclass=Singleton):
 
         # Right turn
         self.stm.send_stm_command_and_wait(*[
+            StmWiggle()
             StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed),
             StmWiggle()
         ])
@@ -342,6 +343,10 @@ class TaskTwoRunner(metaclass=Singleton):
     """
 
     def run(self, callback:Callable[[], None] = lambda: None) -> None:
+
+        self.distance_to_backtrack = 0
+        self.config = self.ConfigManeuver()
+
         self.end_callback = callback
         self._step_one()
         # self._test()
