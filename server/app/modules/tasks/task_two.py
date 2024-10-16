@@ -192,7 +192,9 @@ class TaskTwoRunner(metaclass=Singleton):
             StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed),
             StmWiggle(),
             StmWiggle(),
-            StmWiggle()
+            StmWiggle(),
+            StmWiggle(),
+            StmWiggle(),
         ])
 
 
