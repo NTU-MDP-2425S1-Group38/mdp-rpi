@@ -141,7 +141,7 @@ class Task1RPI:
 
         self.robot_x = 0
         self.robot_y = 0
-        self.robot_d = "NORTH"
+        self.robot_d = "EAST"
 
         self.obstacle_dict = {}  # Obstacle Dict
         self.robot = None  # Robot
