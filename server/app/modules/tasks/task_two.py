@@ -137,8 +137,10 @@ class TaskTwoRunner(metaclass=Singleton):
         )
 
         self.logger.info("Catching leftover commands")
-        for _ in range(len(commands)+1):
-            self.stm.wait_receive(2)
+
+        while self.stm.wait_receive(3):
+            pass
+
 
         self.distance_to_backtrack += self.config.BYPASS_DISTANCE
         self._log_tracked_distances("bypass obstacle")
@@ -321,7 +323,7 @@ class TaskTwoRunner(metaclass=Singleton):
         toggle_flip = 1 if arrow_direction == "left" else -1
 
         offset_distance = max(int((2 ** 0.5) * (self.config.OBSTACLE_WIDTH / 2)) - 15, 0)
-        backtrack_distance = self.distance_to_backtrack - 15  # distance before making first 45deg turn
+        backtrack_distance = self.distance_to_backtrack - 30  # distance before making first 45deg turn
 
         self._log_tracked_distances("Performing backtrack")
 
