@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import json
 import queue
-import time
 from multiprocessing import Manager, Process
 from typing import Optional
 
@@ -19,6 +18,13 @@ obstacle_direction = {
     "SOUTH": 2,
     "EAST": 3,
     "WEST": 4,
+}
+
+direction_obstacle = {
+    1: "NORTH",
+    2: "SOUTH",
+    3: "EAST",
+    4: "WEST",
 }
 
 # Need to Fix
@@ -55,6 +61,24 @@ SYMBOL_MAP = {
     "LEFT": "39",
     "CIRCLE": "40",
 }
+
+
+def convert_from_br_to_bl(command):
+    # North (0,0) -> (0,2) (Bottom Right)
+    if command["d"] == 1:
+        command["x"] += 2
+    # South (9,5) -> (11,3) (Top Left)
+    elif command["d"] == 2:
+        command["x"] += 2
+        command["y"] -= 2
+    # East (4,17) -> (6,15) (Top Right)
+    elif command["d"] == 3:
+        command["y"] -= 2
+        command["x"] += 2
+    # West (ignore) (Bottom Left)
+    elif command["d"] == 4:
+        pass
+    return command
 
 
 class PiAction:
@@ -321,24 +345,6 @@ class Task1RPI:
                         self.logger.debug("Calculated")
 
                 elif "BEGIN" in message_rcv:
-                    # if not self.check_api():
-                    #     self.logger.error("API is down! Start command aborted.")
-                    #     # self.android_queue.put(
-                    #     #     "error, API is down, start command aborted."
-                    #     # )
-
-                    # self.rpi_action_queue.put(
-                    #     PiAction(
-                    #         cat="obstacles", value=list(self.obstacle_dict.values())
-                    #     )
-                    # )
-                    # self.logger.debug(
-                    #     f"Set obstacles PiAction added to queue: {self.obstacle_dict}"
-                    # )
-
-                    # while self.command_queue.empty():
-                    #     pass
-
                     # Commencing path following
                     if not self.command_queue.empty():
                         # Main trigger to start movement #
@@ -391,38 +397,22 @@ class Task1RPI:
 
                     cmd = cmd_speed[0]  # Command (t/T)
 
-                    if turning_degree == f"-{self.drive_angle}":
-                        # Turn left
-                        if cmd == "t":
-                            # Backward left
-                            msg = "TURN,BACKWARD_LEFT,0"
-                        elif cmd == "T":
-                            # Forward left
-                            msg = "TURN,FORWARD_LEFT,0"
-                    elif turning_degree == f"{self.drive_angle}":
-                        # Turn right
-                        if cmd == "t":
-                            # Backward right
-                            msg = "TURN,BACKWARD_RIGHT,0"
-                        elif cmd == "T":
-                            # Forward right
-                            msg = "TURN,FORWARD_RIGHT,0"
-                    elif turning_degree == "0":
-                        if cmd == "t":
-                            # Backward
-                            msg = "MOVE,BACKWARD," + distance
-                        elif cmd == "T":
-                            # Forward
-                            msg = "MOVE,FORWARD," + distance
+                    if (
+                        turning_degree == f"-{self.drive_angle}"
+                        or turning_degree == f"{self.drive_angle}"
+                        or turning_degree == "0"
+                    ):
+                        print("movement commands")
                     else:
                         # Unknown turning degree
                         self.logger.info("Unknown turning degree")
                         msg = "No instruction"
 
-                    if msg != "No instruction":
-                        self.logger.info(f"Msg: {msg}")
-                        self.android_queue.put(msg)
-                        self.logger.info(f"SENT TO ANDROID SUCCESSFULLY: {msg}")
+                    if msg == "No instruction":
+                        print(msg)
+                        # self.logger.info(f"Msg: {msg}")
+                        # self.android_queue.put(msg)
+                        # self.logger.info(f"SENT TO ANDROID SUCCESSFULLY: {msg}")
                     try:
                         self.movement_lock.release()
                         try:
@@ -432,10 +422,23 @@ class Task1RPI:
                         self.logger.debug(
                             "ACK from STM32 received, movement lock released."
                         )
+                        cur_location = self.path_queue.get_nowait()
+                        print("current location", cur_location)
+                        self.current_location["x"] = cur_location["x"]
+                        self.current_location["y"] = cur_location["y"]
+                        self.current_location["d"] = direction_obstacle[
+                            cur_location["d"]
+                        ]
+
                         self.logger.info(
                             f"self.current_location = {self.current_location}"
                         )
-                    except Exception:
+
+                        self.android_queue.put(
+                            f"ROBOT|{self.current_location['y']},{self.current_location['x']},{self.current_location['d']}"
+                        )
+                    except Exception as e:
+                        print(e)
                         self.logger.warning("Tried to release a released lock!")
 
                 else:
@@ -494,80 +497,84 @@ class Task1RPI:
                 val = 2
                 # self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
                 self.stm.send_cmd("T", int(self.drive_speed), -20, 0)
+            elif command != "WIGGLE":
+                if isinstance(command["value"], dict) and command["value"]["move"] in [
+                    "FORWARD",
+                    "BACKWARD",
+                ]:
+                    move_direction = command["value"]["move"]
+                    angle = 0
+                    val = command["value"]["amount"]
+                    self.logger.info(f"AMOUNT TO MOVE: {val}")
+                    self.logger.info(f"MOVE DIRECTION: {move_direction}")
 
-            elif isinstance(command["value"], dict) and command["value"]["move"] in [
-                "FORWARD",
-                "BACKWARD",
-            ]:
-                move_direction = command["value"]["move"]
-                angle = 0
-                val = command["value"]["amount"]
-                self.logger.info(f"AMOUNT TO MOVE: {val}")
-                self.logger.info(f"MOVE DIRECTION: {move_direction}")
-
-                if move_direction == "FORWARD":
-                    flag = "T"
-                elif move_direction == "BACKWARD":
-                    flag = "t"
-
-                self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
-
-            elif command["value"] in [
-                "FORWARD_LEFT",
-                "FORWARD_RIGHT",
-                "BACKWARD_LEFT",
-                "BACKWARD_RIGHT",
-            ]:
-                val = 90
-                if command["value"] == "FORWARD_LEFT":
-                    flag = "T"
-                    angle = -self.drive_angle
-                elif command["value"] == "FORWARD_RIGHT":
-                    flag = "T"
-                    angle = self.drive_angle
-                elif command["value"] == "BACKWARD_LEFT":
-                    flag = "t"
-                    angle = -self.drive_angle
-                elif command["value"] == "BACKWARD_RIGHT":
-                    flag = "t"
-                    angle = self.drive_angle
-                if (
-                    command["value"] == "FORWARD_RIGHT"
-                    or command["value"] == "BACKWARD_RIGHT"
-                ):
-                    prepend_to_queue(self.command_queue, "WIGGLE")
-                    prepend_to_queue(self.command_queue, "WIGGLE")
-                    prepend_to_queue(self.command_queue, "WIGGLE")
+                    if move_direction == "FORWARD":
+                        flag = "T"
+                    elif move_direction == "BACKWARD":
+                        flag = "t"
 
                     self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
-                    # self.stm.send_cmd("T", int(self.drive_speed), -20, 0)
-                    # self.stm.send_cmd("T", int(self.drive_speed), -20, 0)
-                    # self.stm.send_cmd("T", int(self.drive_speed), -20, 0)
 
-                else:
+                elif command["value"] in [
+                    "FORWARD_LEFT",
+                    "FORWARD_RIGHT",
+                    "BACKWARD_LEFT",
+                    "BACKWARD_RIGHT",
+                ]:
+                    val = 90
+                    if command["value"] == "FORWARD_LEFT":
+                        flag = "T"
+                        angle = -self.drive_angle
+                    elif command["value"] == "FORWARD_RIGHT":
+                        flag = "T"
+                        angle = self.drive_angle
+                    elif command["value"] == "BACKWARD_LEFT":
+                        flag = "t"
+                        angle = -self.drive_angle
+                    elif command["value"] == "BACKWARD_RIGHT":
+                        flag = "t"
+                        angle = self.drive_angle
+                    if (
+                        command["value"] == "FORWARD_RIGHT"
+                        or command["value"] == "BACKWARD_RIGHT"
+                    ):
+                        prepend_to_queue(self.command_queue, "WIGGLE")
+                        prepend_to_queue(self.command_queue, "WIGGLE")
+                        prepend_to_queue(self.command_queue, "WIGGLE")
+
+                        self.stm.send_cmd(
+                            flag, int(self.drive_speed), int(angle), int(val)
+                        )
+                        # self.stm.send_cmd("T", int(self.drive_speed), -20, 0)
+                        # self.stm.send_cmd("T", int(self.drive_speed), -20, 0)
+                        # self.stm.send_cmd("T", int(self.drive_speed), -20, 0)
+
+                    else:
+                        self.stm.send_cmd(
+                            flag, int(self.drive_speed), int(angle), int(val)
+                        )
+
+                elif command["value"] == "CAPTURE_IMAGE":
+                    flag = "S"
                     self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
+                    self.rpi_action_queue.put(
+                        PiAction(cat="snap", value=command["capture_id"])
+                    )
 
-            elif command["value"] == "CAPTURE_IMAGE":
-                flag = "S"
-                self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
-                self.rpi_action_queue.put(
-                    PiAction(cat="snap", value=command["capture_id"])
-                )
-
-            # End of path (TBD)
-            elif command["value"] == "FIN":
-                self.logger.info(
-                    f"At FIN, self.failed_obstacles: {self.failed_obstacles}"
-                )
-                self.logger.info(
-                    f"At FIN, self.current_location: {self.current_location}"
-                )
-                self.unpause.clear()
-                self.movement_lock.release()
-                self.logger.info("Commands queue finished.")
-                # self.android_queue.put("info, Commands queue finished.")
-                # self.android_queue.put("status, finished")
-                self.rpi_action_queue.put(PiAction(cat="stitch", value=""))
+                # End of path (TBD)
+                elif command["value"] == "FIN":
+                    self.logger.info(
+                        f"At FIN, self.failed_obstacles: {self.failed_obstacles}"
+                    )
+                    self.logger.info(
+                        f"At FIN, self.current_location: {self.current_location}"
+                    )
+                    self.unpause.clear()
+                    self.movement_lock.release()
+                    self.logger.info("Commands queue finished.")
+                    # self.android_queue.put("info, Commands queue finished.")
+                    # self.android_queue.put("status, finished")
+                    self.rpi_action_queue.put(PiAction(cat="stitch", value=""))
             else:
                 raise Exception(f"Unknown command: {command}")
 
@@ -690,13 +697,23 @@ class Task1RPI:
             return
 
         result = json.loads(response.content)
-        print(result)
         commands = result["commands"]
+
+        print("commands", commands)
+        # Extracting end positions from the list of commands
+        end_positions = [
+            convert_from_br_to_bl(command["end_position"]) for command in commands
+        ]
 
         # Put commands and paths into respective queues
         self.clear_queues()
         for c in commands:
             self.command_queue.put(c)
+
+        # Print or return the extracted end positions
+        print("end_positions", end_positions)
+        for p in end_positions:
+            self.path_queue.put(p)
         # self.android_queue.put(
         #     "info, Commands and path received Algo API. Robot is ready to move."
         # )
@@ -728,6 +745,8 @@ class Task1RPI:
         """Clear both command and path queues"""
         while not self.command_queue.empty():
             self.command_queue.get()
+        while not self.path_queue.empty():
+            self.path_queue.get()
 
     # Done
     def check_api(self) -> bool:
