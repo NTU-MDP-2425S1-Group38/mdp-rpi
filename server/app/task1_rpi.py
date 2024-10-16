@@ -175,7 +175,7 @@ class Task1RPI:
 
             # Send success message to Android
             self.android_queue.put("info, Robot is ready!")
-            self.android_queue.put("mode, path")
+            # self.android_queue.put("mode, path")
             self.reconnect_android()
 
         except KeyboardInterrupt:
@@ -226,8 +226,8 @@ class Task1RPI:
             self.proc_android_sender.start()
 
             self.logger.info("Android child processes restarted")
-            self.android_queue.put("info, You are reconnected!")
-            self.android_queue.put("mode, path")
+            # self.android_queue.put("info, You are reconnected!")
+            # self.android_queue.put("mode, path")
 
             self.android_dropped.clear()
 
@@ -300,9 +300,9 @@ class Task1RPI:
                 elif "BEGIN" in message_rcv:
                     if not self.check_api():
                         self.logger.error("API is down! Start command aborted.")
-                        self.android_queue.put(
-                            "error, API is down, start command aborted."
-                        )
+                        # self.android_queue.put(
+                        #     "error, API is down, start command aborted."
+                        # )
 
                     self.rpi_action_queue.put(
                         PiAction(
@@ -323,16 +323,16 @@ class Task1RPI:
                         self.logger.info(
                             "Start command received, starting robot on path!"
                         )
-                        self.android_queue.put("info, Starting robot on path!")
+                        # self.android_queue.put("info, Starting robot on path!")
 
-                        self.android_queue.put("status, running")
+                        # self.android_queue.put("status, running")
                     else:
                         self.logger.warning(
                             "The command queue is empty, please set obstacles."
                         )
-                        self.android_queue.put(
-                            "error,Command queue is empty, did you set obstacles?",
-                        )
+                        # self.android_queue.put(
+                        #     "error,Command queue is empty, did you set obstacles?",
+                        # )
 
                 elif "CLEAR" in message_rcv:
                     print(" --------------- CLEARING OBSTACLES LIST. ---------------- ")
@@ -356,25 +356,6 @@ class Task1RPI:
 
                 if message.startswith("fS"):
                     continue
-                    # if self.rs_flag is False:
-                    #     self.rs_flag = True
-                    #     self.logger.debug("ACK for RS00 from STM32 received.")
-                    #     continue
-                    # try:
-                    #     self.movement_lock.release()
-                    #     try:
-                    #         self.retrylock.release()
-                    #     except:
-                    #         pass
-                    #     self.logger.debug(
-                    #         "ACK from STM32 received, movement lock released."
-                    #     )
-                    #     self.logger.info(
-                    #         f"self.current_location = {self.current_location}"
-                    #     )
-
-                    # except Exception:
-                    #     self.logger.warning("Tried to release a released lock!")
 
                 elif message[0] == "f":
                     # Finished command, send to android
@@ -552,25 +533,11 @@ class Task1RPI:
                 self.logger.info(
                     f"At FIN, self.current_location: {self.current_location}"
                 )
-                # if len(self.failed_obstacles) != 0 and self.failed_attempt is False:
-                #     new_obstacle_list = list(self.failed_obstacles)
-                #     for i in list(self.success_obstacles):
-                #         # {'x': 5, 'y': 11, 'id': 1, 'd': 4}
-                #         i["d"] = 8
-                #         new_obstacle_list.append(i)
-
-                #     self.logger.info("Attempting to go to failed obstacles")
-                #     self.failed_attempt = True
-                #     self.request_algo(new_obstacle_list)
-                #     self.retrylock = self.manager.Lock()
-                #     self.movement_lock.release()
-                #     continue
-
                 self.unpause.clear()
                 self.movement_lock.release()
                 self.logger.info("Commands queue finished.")
-                self.android_queue.put("info, Commands queue finished.")
-                self.android_queue.put("status, finished")
+                # self.android_queue.put("info, Commands queue finished.")
+                # self.android_queue.put("status, finished")
                 self.rpi_action_queue.put(PiAction(cat="stitch", value=""))
             else:
                 raise Exception(f"Unknown command: {command}")
@@ -604,10 +571,8 @@ class Task1RPI:
         """
         obstacle_id = obstacle_id_with_signal
         self.logger.info(f"Capturing image for obstacle id: {obstacle_id}")
-        self.android_queue.put(f"info, Capturing image for obstacle id: {obstacle_id}")
+        # self.android_queue.put(f"info, Capturing image for obstacle id: {obstacle_id}")
         url = f"http://{API_IP}:{API_PORT}/image"
-        filename = f"{int(time.time())}_{obstacle_id}.jpg"
-
         retry_count = 0
 
         while True:
@@ -687,9 +652,9 @@ class Task1RPI:
 
         # Error encountered at the server, return early
         if response.status_code != 200:
-            self.android_queue.put(
-                "error, Something went wrong when requesting path from Algo API."
-            )
+            # self.android_queue.put(
+            #     "error, Something went wrong when requesting path from Algo API."
+            # )
             self.logger.error(
                 "Something went wrong when requesting path from Algo API."
             )
@@ -703,9 +668,9 @@ class Task1RPI:
         self.clear_queues()
         for c in commands:
             self.command_queue.put(c)
-        self.android_queue.put(
-            "info, Commands and path received Algo API. Robot is ready to move."
-        )
+        # self.android_queue.put(
+        #     "info, Commands and path received Algo API. Robot is ready to move."
+        # )
         self.logger.info("Commands and path received Algo API. Robot is ready to move.")
 
     # Done
@@ -726,7 +691,8 @@ class Task1RPI:
             return
 
         self.logger.info("Images stitched!")
-        self.android_queue.put("info, Images stitched!")
+        self.android_queue.put("STOP")
+        # self.android_queue.put("info, Images stitched!")
 
     # Done
     def clear_queues(self):
