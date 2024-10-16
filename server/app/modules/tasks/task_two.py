@@ -132,7 +132,7 @@ class TaskTwoRunner(metaclass=Singleton):
         for _ in commands:
             self.stm.wait_receive(2)
 
-        self.config.BYPASS_DISTANCE += 90
+        self.distance_to_backtrack += self.config.BYPASS_DISTANCE
 
     def _go_around_obstacle(self, direction: Literal["left", "right"]):
         """

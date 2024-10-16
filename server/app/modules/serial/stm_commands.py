@@ -58,7 +58,7 @@ class StmMove(StmCommand):
 class StmWiggle(StmCommand):
 
     def to_serial(self) -> str:
-        return StmMove(0, angle=-20, speed=0).to_serial()
+        return StmMove(0, angle=-45, speed=0).to_serial()
 
 
 class StmTurn(StmCommand):
