@@ -29,7 +29,7 @@ class TaskTwoRunner(metaclass=Singleton):
 
     class ConfigManeuver:
         forward_speed: int = 80
-        turn_speed: int = 60
+        turn_speed: int = 40
 
         SERVO_TURN_ANGLE = 25
         BYPASS_DISTANCE: int
