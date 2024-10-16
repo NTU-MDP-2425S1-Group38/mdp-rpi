@@ -395,11 +395,11 @@ class Task1RPI:
                         # Unknown turning degree
                         self.logger.info("Unknown turning degree")
                         msg = "No instruction"
-                        continue
 
-                    self.logger.info(f"Msg: {msg}")
-                    self.android_queue.put(msg)
-                    self.logger.info(f"SENT TO ANDROID SUCCESSFULLY: {msg}")
+                    if msg != "No instruction":
+                        self.logger.info(f"Msg: {msg}")
+                        self.android_queue.put(msg)
+                        self.logger.info(f"SENT TO ANDROID SUCCESSFULLY: {msg}")
                     try:
                         self.movement_lock.release()
                         try:
