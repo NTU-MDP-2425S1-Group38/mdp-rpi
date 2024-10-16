@@ -167,6 +167,7 @@ class TaskTwoRunner(metaclass=Singleton):
                 StmWiggle(),
                 StmWiggle(),
                 StmWiggle(),
+                StmSideHug(hug_side, threshold=60, speed=self.config.turn_speed, forward=False),
                 StmMoveUntilSideObstacle(side=hug_side, threshold=60, speed=self.config.turn_speed)
             ]
 
