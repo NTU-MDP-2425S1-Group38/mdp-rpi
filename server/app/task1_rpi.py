@@ -407,7 +407,7 @@ class Task1RPI:
                         or turning_degree == f"{self.drive_angle}"
                         or turning_degree == "0"
                     ):
-                        msg = f"ROBOT|{self.robot_x},{self.robot_y},{self.robot_d}"
+                        msg = f"ROBOT|{self.robot_y},{self.robot_x},{self.robot_d}"
                     # if turning_degree == f"-{self.drive_angle}":
                     #     # Turn left
                     #     if cmd == "t":
@@ -514,7 +514,7 @@ class Task1RPI:
             elif command != "WIGGLE":
                 self.robot_x = command["end_position"]["x"]
                 self.robot_y = command["end_position"]["y"]
-                self.robot_d = command["end_position"]["d"]
+                self.robot_d = direction_obstacle[command["end_position"]["d"]]
 
                 if isinstance(command["value"], dict) and command["value"]["move"] in [
                     "FORWARD",
