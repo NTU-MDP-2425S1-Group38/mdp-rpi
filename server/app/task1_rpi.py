@@ -391,6 +391,8 @@ class Task1RPI:
                         elif cmd == "T":
                             # Forward
                             msg = "MOVE,FORWARD," + distance
+                    elif turning_degree == "20" or turning_degree == "-20":
+                        continue
                     else:
                         # Unknown turning degree
                         self.logger.info("Unknown turning degree")
@@ -467,7 +469,7 @@ class Task1RPI:
             if command == "WIGGLE":
                 self.logger.info("WIGGLE")
                 flag = "T"
-                angle = -25
+                angle = -20
                 val = 2
                 self.stm.send_cmd(flag, int(self.drive_speed), int(angle), int(val))
 
