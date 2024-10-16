@@ -343,9 +343,16 @@ class TaskTwoRunner(metaclass=Singleton):
                 # Align with car park
                 StmTurn(angle=toggle_flip * 45, speed=self.config.turn_speed),
                 StmWiggle(),
+                StmWiggle(),
+                StmWiggle(),
                 StmStraight(distance=offset_distance, speed=self.config.turn_speed),
                 StmWiggle(),
+                StmWiggle(),
+                StmWiggle(),
                 StmTurn(angle=toggle_flip * -45, speed=self.config.turn_speed),
+                StmWiggle(),
+                StmWiggle(),
+                StmWiggle(),
                 # Close into car park
                 StmMoveToDistance(distance=20),
             ]
