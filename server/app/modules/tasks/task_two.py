@@ -306,24 +306,25 @@ class TaskTwoRunner(metaclass=Singleton):
         """
         toggle_flip = 1 if arrow_direction == "left" else -1
 
-        offset_distance = max(int(self.config.OBSTACLE_WIDTH/2)-35, 0)
+        offset_distance = max(int(self.config.OBSTACLE_WIDTH/2)-25, 0)
+        backtrack_distance = self.distance_to_backtrack - 15  # distance before making first 45deg turn
 
         self.logger.info(f"OFFSET DISTANCE: {offset_distance}")
-        self.logger.info(f"BACKTRACK: {self.distance_to_backtrack}")
+        self.logger.info(f"BACKTRACK: {backtrack_distance}")
 
         self.stm.send_stm_command(
             *[
                 StmWiggle(),
                 # Move backtrack distance
                 StmStraight(
-                    distance=self.distance_to_backtrack, speed=self.config.forward_speed
+                    distance=backtrack_distance, speed=self.config.forward_speed
                 ),
                 # Align with car park
-                StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed),
+                StmTurn(angle=toggle_flip * 45, speed=self.config.turn_speed),
                 StmWiggle(),
                 StmStraight(distance=offset_distance, speed=self.config.turn_speed),
                 StmWiggle(),
-                StmTurn(angle=toggle_flip * -90, speed=self.config.turn_speed),
+                StmTurn(angle=toggle_flip * -45, speed=self.config.turn_speed),
                 # Close into car park
                 StmMoveToDistance(distance=20),
             ]
