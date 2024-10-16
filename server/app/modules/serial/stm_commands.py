@@ -82,6 +82,7 @@ class StmTurn(StmCommand):
                 servo_angle = -25
             else:
                 servo_angle = 25
+                self.angle = 0.98 * self.angle
 
         # the resultant angle is scaled due to servo issues
         return StmMove(distance=int(1.00*(abs(self.angle))), angle=servo_angle, speed=self.speed).to_serial()
