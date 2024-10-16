@@ -35,7 +35,7 @@ class TaskTwoRunner(metaclass=Singleton):
         BYPASS_DISTANCE: int
         OBSTACLE_WIDTH: int
 
-        STEP_THREE_CLOSEUP_DISTANCE: int = 30  # Distance for the robot to MOVE_FORWARD to the second obstacle
+        STEP_THREE_CLOSEUP_DISTANCE: int = 33  # Distance for the robot to MOVE_FORWARD to the second obstacle
         FALLBACK_STEP_THREE_DISTANCE: int = 80
 
         def __init__(self):
