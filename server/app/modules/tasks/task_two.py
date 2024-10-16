@@ -330,7 +330,9 @@ class TaskTwoRunner(metaclass=Singleton):
             int((2 ** 0.5) * ((self.config.OBSTACLE_WIDTH - 25)/ 2)),
             0
         )
-        backtrack_distance = self.distance_to_backtrack - 30  # distance before making first 45deg turn
+
+        # distance before making first 45deg turn
+        backtrack_distance = self.distance_to_backtrack - 30 - offset_distance
 
         self._log_tracked_distances("Performing backtrack")
 
