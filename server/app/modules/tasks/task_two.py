@@ -329,7 +329,7 @@ class TaskTwoRunner(metaclass=Singleton):
         toggle_flip = 1 if arrow_direction == "left" else -1
 
         offset_distance = max(
-            int((2 ** 0.5) * ((self.config.OBSTACLE_WIDTH - 12)/ 2)),
+            int((2 ** 0.5) * ((self.config.OBSTACLE_WIDTH - 7)/ 2)),
             0
         )
 
