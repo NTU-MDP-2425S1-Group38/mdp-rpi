@@ -129,7 +129,7 @@ class TaskTwoRunner(metaclass=Singleton):
         )
 
         self.logger.info("Catching leftover commands")
-        for _ in commands:
+        for _ in range(len(commands)+1):
             self.stm.wait_receive(2)
 
         self.distance_to_backtrack += self.config.BYPASS_DISTANCE
