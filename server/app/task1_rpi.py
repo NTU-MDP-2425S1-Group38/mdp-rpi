@@ -391,9 +391,6 @@ class Task1RPI:
                         elif cmd == "T":
                             # Forward
                             msg = "MOVE,FORWARD," + distance
-                    elif turning_degree == "20" or turning_degree == "-20":
-                        msg = "No instruction"
-                        continue
                     else:
                         # Unknown turning degree
                         self.logger.info("Unknown turning degree")
