@@ -40,7 +40,7 @@ class TaskTwoRunner(metaclass=Singleton):
 
         def __init__(self):
             self.OBSTACLE_WIDTH = 0
-            self.BYPASS_DISTANCE = 70
+            self.BYPASS_DISTANCE = 55
 
     def __init__(self):
         self.logger = logging.getLogger("TaskTwoRunner")
