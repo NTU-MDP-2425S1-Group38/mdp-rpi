@@ -172,7 +172,7 @@ class TaskTwoRunner(metaclass=Singleton):
 
         # Right turn
         self.stm.send_stm_command_and_wait(*[
-            StmWiggle()
+            StmWiggle(),
             StmTurn(angle=toggle_flip * 90, speed=self.config.turn_speed),
             StmWiggle()
         ])
