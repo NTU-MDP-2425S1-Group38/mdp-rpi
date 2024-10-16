@@ -229,7 +229,7 @@ class TaskTwoRunner(metaclass=Singleton):
                 "left" if response.label == ObstacleLabel.Shape_Left else "right"
             )
             self._bypass_obstacle(direction)
-            self.distance_to_backtrack += self.config.BYPASS_DISTANCE
+            self.distance_to_backtrack += (self.config.BYPASS_DISTANCE//2) + 10
             self._step_three()
 
     def _step_three(self) -> None:
@@ -255,6 +255,9 @@ class TaskTwoRunner(metaclass=Singleton):
         self.config.BYPASS_DISTANCE += distance_moved
 
         self._move_backwards_to_distance(self.config.STEP_THREE_CLOSEUP_DISTANCE)
+
+        # Account for additional distance to account for
+        self.distance_to_backtrack += self.config.STEP_THREE_CLOSEUP_DISTANCE
 
 
 
@@ -302,7 +305,9 @@ class TaskTwoRunner(metaclass=Singleton):
 
         offset_distance = max(int(self.config.OBSTACLE_WIDTH/2)-35, 0)
 
-        self.logger.info(f"Backtrack distance: {self.distance_to_backtrack}")
+        self.logger.info(f"OFFSET DISTANCE: {offset_distance}")
+        self.logger.info(f"BACKTRACK: {self.distance_to_backtrack}")
+
         self.stm.send_stm_command(
             *[
                 StmWiggle(),
