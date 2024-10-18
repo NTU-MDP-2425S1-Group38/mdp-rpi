@@ -60,6 +60,18 @@ class ConnectionManager(metaclass=Singleton):
     #         return loop.run_until_complete(coro)
 
     def _run_async(self, coro):
+        # try:
+        #     self.logger.info("Attempting to run async coroutine")
+        #     loop = asyncio.get_event_loop()
+        # except RuntimeError:
+        #     loop = asyncio.new_event_loop()
+        #     asyncio.set_event_loop(loop)
+        #
+        # if loop.is_running():
+        #     asyncio.ensure_future(coro, loop=loop)
+        # else:
+        #     loop.run_until_complete(coro)
+
         try:
             self.logger.info("Attempting to run async coroutine")
             loop = asyncio.get_event_loop()
@@ -68,9 +80,9 @@ class ConnectionManager(metaclass=Singleton):
             asyncio.set_event_loop(loop)
 
         if loop.is_running():
-            asyncio.ensure_future(coro, loop=loop)
+            asyncio.create_task(coro)
         else:
-            loop.run_until_complete(coro)
+            asyncio.run(coro)
 
     """
     ALGO RELATED STUFF
