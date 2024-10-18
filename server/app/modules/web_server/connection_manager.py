@@ -59,34 +59,34 @@ class ConnectionManager(metaclass=Singleton):
     #     else:
     #         return loop.run_until_complete(coro)
 
-    # def _run_async(self, coro):
-    # try:
-    #     self.logger.info("Attempting to run async coroutine")
-    #     loop = asyncio.get_event_loop()
-    # except RuntimeError:
-    #     loop = asyncio.new_event_loop()
-    #     asyncio.set_event_loop(loop)
-    #
-    # if loop.is_running():
-    #     asyncio.ensure_future(coro, loop=loop)
-    # else:
-    #     loop.run_until_complete(coro)
-
-    def _run_async(self, coro: Coroutine):
+    def _run_async(self, coro):
         try:
             self.logger.info("Attempting to run async coroutine")
-            loop = asyncio.get_event_loop()  # Get current event loop
+            loop = asyncio.get_event_loop()
         except RuntimeError:
-            # Create a new event loop if none exists for this thread
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
         if loop.is_running():
-            # Schedule coroutine to run asynchronously
-            asyncio.ensure_future(coro)
+            asyncio.ensure_future(coro, loop=loop)
         else:
-            # Use run_coroutine_threadsafe to submit the coroutine to the correct loop
-            asyncio.run_coroutine_threadsafe(coro, loop)
+            loop.run_until_complete(coro)
+
+    # def _run_async(self, coro: Coroutine):
+    #     try:
+    #         self.logger.info("Attempting to run async coroutine")
+    #         loop = asyncio.get_event_loop()  # Get current event loop
+    #     except RuntimeError:
+    #         # Create a new event loop if none exists for this thread
+    #         loop = asyncio.new_event_loop()
+    #         asyncio.set_event_loop(loop)
+    #
+    #     if loop.is_running():
+    #         # Schedule coroutine to run asynchronously
+    #         asyncio.ensure_future(coro)
+    #     else:
+    #         # Use run_coroutine_threadsafe to submit the coroutine to the correct loop
+    #         asyncio.run_coroutine_threadsafe(coro, loop)
 
     """
     ALGO RELATED STUFF
