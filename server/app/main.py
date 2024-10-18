@@ -33,7 +33,7 @@ def run_web_server() -> None:
 def run_bluetooth_server() -> None:
     load_dotenv()
     android = Android()
-    # android.run_task_2()
+    android.run_task_2()
 
 
 def run_stm() -> None:
