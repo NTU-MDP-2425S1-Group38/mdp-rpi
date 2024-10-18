@@ -96,7 +96,7 @@ class Android(metaclass=Singleton):
 
             # Initialize server socket
             self.server_socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-            self.server_socket.bind(("", bluetooth.PORT_ANY))
+            self.server_socket.bind(("", 1))
             self.server_socket.listen(1)
 
             # Parameters
@@ -155,7 +155,6 @@ class Android(metaclass=Singleton):
             self.connect()
             self.send(message)
 
-
     def receive(self) -> Optional[str]:
         """Receive message from Android"""
         try:
@@ -203,7 +202,6 @@ class Android(metaclass=Singleton):
                 self.logger.error("Event set: Bluetooth connection dropped")
                 self.logger.warning("Attempting to reconnect")
                 self.connect()
-
 
     def run_task_1(self) -> None:
         """
