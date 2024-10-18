@@ -59,37 +59,41 @@ class ConnectionManager(metaclass=Singleton):
     #     else:
     #         return loop.run_until_complete(coro)
 
-    def _run_async(self, coro):
-        # try:
-        #     self.logger.info("Attempting to run async coroutine")
-        #     loop = asyncio.get_event_loop()
-        # except RuntimeError:
-        #     loop = asyncio.new_event_loop()
-        #     asyncio.set_event_loop(loop)
-        #
-        # if loop.is_running():
-        #     asyncio.ensure_future(coro, loop=loop)
-        # else:
-        #     loop.run_until_complete(coro)
+    # def _run_async(self, coro):
+    # try:
+    #     self.logger.info("Attempting to run async coroutine")
+    #     loop = asyncio.get_event_loop()
+    # except RuntimeError:
+    #     loop = asyncio.new_event_loop()
+    #     asyncio.set_event_loop(loop)
+    #
+    # if loop.is_running():
+    #     asyncio.ensure_future(coro, loop=loop)
+    # else:
+    #     loop.run_until_complete(coro)
 
+    def _run_async(self, coro: Coroutine):
         try:
             self.logger.info("Attempting to run async coroutine")
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_event_loop()  # Get current event loop
         except RuntimeError:
+            # Create a new event loop if none exists for this thread
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
         if loop.is_running():
-            asyncio.create_task(coro)
+            # Schedule coroutine to run asynchronously
+            asyncio.ensure_future(coro)
         else:
-            asyncio.run(coro)
+            # Use run_coroutine_threadsafe to submit the coroutine to the correct loop
+            asyncio.run_coroutine_threadsafe(coro, loop)
 
     """
     ALGO RELATED STUFF
     """
 
     async def _broadcast_algo_req(
-        self, req_id: str, obstacles: List[Obstacle]
+            self, req_id: str, obstacles: List[Obstacle]
     ) -> List[Command]:
         if not self.connections:
             self.logger.error("No slave connections available to process algo!")
@@ -119,7 +123,7 @@ class ConnectionManager(metaclass=Singleton):
         )
 
     def slave_request_algo(
-        self, obstacles: List[Obstacle], callback: Callable[[AlgoCommandResponse], None]
+            self, obstacles: List[Obstacle], callback: Callable[[AlgoCommandResponse], None]
     ) -> None:
         self.logger.info("Sending Algo request to slaves!")
         req_id = str(uuid4())
@@ -163,7 +167,7 @@ class ConnectionManager(metaclass=Singleton):
         )
 
     def slave_request_cv(
-        self, image: str, callback: Callable[[CvResponse], None], ignore_bullseye:bool = False
+            self, image: str, callback: Callable[[CvResponse], None], ignore_bullseye: bool = False
     ) -> None:
         """
         :param image: base64 string of image
