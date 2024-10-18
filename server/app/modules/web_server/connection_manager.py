@@ -70,7 +70,7 @@ class ConnectionManager(metaclass=Singleton):
         if loop.is_running():
             asyncio.ensure_future(coro, loop=loop)
         else:
-            loop.run_until_complete(coro)
+            asyncio.create_task(coro)
 
     # def _run_async(self, coro: Coroutine):
     #     try:
