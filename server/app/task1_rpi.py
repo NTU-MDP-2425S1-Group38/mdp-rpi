@@ -543,11 +543,8 @@ class Task1RPI:
                         prepend_to_queue(self.command_queue, "WIGGLE")
 
                         self.stm.send_cmd(
-                            flag, int(self.drive_speed), int(angle), int(val)
+                            flag, int(self.drive_speed), int(angle), int(val) - 3
                         )
-                        # self.stm.send_cmd("T", int(self.drive_speed), -20, 0)
-                        # self.stm.send_cmd("T", int(self.drive_speed), -20, 0)
-                        # self.stm.send_cmd("T", int(self.drive_speed), -20, 0)
 
                     else:
                         self.stm.send_cmd(
